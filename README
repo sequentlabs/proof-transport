@@ -1,9 +1,8 @@
 # Proof-Transport
 
 [![CI](https://github.com/sequentlabs/proof-transport/actions/workflows/ci.yml/badge.svg?branch=main)](https://github.com/sequentlabs/proof-transport/actions/workflows/ci.yml)
-[![License](https://img.shields.io/badge/License-MIT-blue.svg)](https://github.com/sequentlabs/proof-transport/blob/main/LICENSE)
+[![License](https://img.shields.io/badge/License-MIT-blue.svg)](LICENSE)
 [![Live Demo](https://img.shields.io/badge/demo-online-green)](https://sequentlabs.github.io/proof-transport/)
-
 
 **Proof-Transport**: keep proofs valid when the proof kernel changes.  
 Automatically transport sequent proofs across rule-set updates (e.g., remove `Cut`) and emit stability certificates.
@@ -11,15 +10,15 @@ Automatically transport sequent proofs across rule-set updates (e.g., remove `Cu
 ---
 
 ## 🔗 Links
-- 📄 [Project board](https://github.com/sequentlabs/proof-transport/projects)  
-- 🌍 [Live demo explorer](https://sequentlabs.github.io/proof-transport/)  
+- 📄 [Project board](https://github.com/sequentlabs/proof-transport/projects)
+- 🌍 [Live demo explorer](https://sequentlabs.github.io/proof-transport/)
 - ✅ [Latest CI run](https://github.com/sequentlabs/proof-transport/actions)
 
 ---
 
 ## ✅ What CI checks
 - Rust crate builds successfully  
-- JSON examples are schema-valid  
+- JSON examples are schema‑valid  
 - BEFORE proofs contain a `Cut`  
 - AFTER proofs have no `Cut`  
 - Node count decreases (fragility drop)
@@ -32,17 +31,15 @@ Automatically transport sequent proofs across rule-set updates (e.g., remove `Cu
 ---
 
 ## ⚡ Quickstart
-```bash
-cargo build --release
-./target/release/tesl version
 
+    cargo build --release
+    ./target/release/tesl version
 
 ---
 
 ## 🤝 Partners & Early Adopters
-- Discussions with Lean/Coq devs about testing Proof-Transport exporters  
+- Discussions with Lean/Coq devs about testing Proof‑Transport exporters  
 - Applied crypto teams have expressed interest in resilient audit proofs  
-- Academic collaborators intend to trial Proof-Transport in verification workflows  
+- Academic collaborators intend to trial Proof‑Transport in verification workflows  
 
-> “We plan to trial Proof-Transport to preserve proofs across kernel changes.” — mark@mazlo.io
-
+> “We plan to trial Proof‑Transport to preserve proofs across kernel changes.” — mark@mazlo.io
