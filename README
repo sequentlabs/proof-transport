@@ -34,3 +34,14 @@ Automatically transport sequent proofs across rule-set updates (e.g., remove `Cu
 ```bash
 cargo build --release
 ./target/release/tesl version
+
+
+---
+
+## 🤝 Partners & Early Adopters
+- Discussions with Lean/Coq devs about testing Proof-Transport exporters  
+- Applied crypto teams have expressed interest in resilient audit proofs  
+- Academic collaborators intend to trial Proof-Transport in verification workflows  
+
+> “We plan to trial Proof-Transport to preserve proofs across kernel changes.” — mark@mazlo.io
+
