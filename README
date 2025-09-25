@@ -1,18 +1,36 @@
 # Proof-Transport
+
 [![CI](https://github.com/sequentlabs/proof-transport/actions/workflows/ci.yml/badge.svg)](https://github.com/sequentlabs/proof-transport/actions/workflows/ci.yml)
-[![Build](https://img.shields.io/github/actions/workflow/status/sequentlabs/proof-transport/ci.yml?branch=main)](https://github.com/sequentlabs/proof-transport/actions)
 [![License](https://img.shields.io/badge/license-MIT-blue.svg)](LICENSE)
 [![Live Demo](https://img.shields.io/badge/demo-online-green)](https://sequentlabs.github.io/proof-transport/)
 
-**One-liner:** keep proofs valid when the proof kernel changes. Transport sequent proofs across rule-set updates (e.g., remove `Cut`) and emit stability certificates.
+**Proof-Transport**: keep proofs valid when the proof kernel changes.  
+Automatically transport sequent proofs across rule-set updates (e.g., remove `Cut`) and emit stability certificates.
 
-## Quickstart
-## ✅ What CI checks automatically
-- Rust crate builds successfully
-- JSON examples are schema-valid
-- BEFORE proof contains a `Cut`
-- AFTER proof has no `Cut`
+---
+
+## 🔗 Links
+- 📄 [Project board](https://github.com/sequentlabs/proof-transport/projects)  
+- 🌍 [Live demo explorer](https://sequentlabs.github.io/proof-transport/)  
+- ✅ [Latest CI run](https://github.com/sequentlabs/proof-transport/actions)
+
+---
+
+## ✅ What CI checks
+- Rust crate builds successfully  
+- JSON examples are schema-valid  
+- BEFORE proofs contain a `Cut`  
+- AFTER proofs have no `Cut`  
 - Node count decreases (fragility drop)
+
+---
+
+## 🖼️ Demo Screenshot
+![Demo screenshot](docs/img/proof_demo.png)
+
+---
+
+## ⚡ Quickstart
 ```bash
 cargo build --release
 ./target/release/tesl version
