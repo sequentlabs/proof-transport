@@ -22,9 +22,14 @@ const cy = cytoscape({
   container: document.getElementById('cy'),
   style: [
     { selector: 'node', style: {
-      'label': 'data(lbl)','font-size':10,'text-wrap':'wrap',
-      'background-color': ele => ele.data('rule')==='Cut' ? '#ff9aa2' : '#a0c4ff',
-      'shape':'round-rectangle'
+      'label': 'data(lbl)',
+'font-size': 14,
+'text-wrap': 'wrap',
+'text-max-width': 120,
+'background-color': ele => ele.data('rule')==='Cut' ? '#ff4d4d' : '#4da6ff',
+'shape': 'round-rectangle',
+'padding': '15px'
+
     }},
     { selector: 'edge', style: {'target-arrow-shape':'triangle','curve-style':'bezier'} }
   ],
@@ -34,7 +39,9 @@ async function loadJson(url) {
   const j = await fetch(url).then(r=>r.json());
   const nodes = []; const edges = [];
   (j.nodes||[]).forEach(n => {
-    const lbl = `${n.rule}\nctx=${(n.sequent?.ctx||[]).length}`;
+    const goal = JSON.stringify(n.sequent?.goal || {}).slice(0,30);
+const lbl = `${n.rule}\nctx=${(n.sequent?.ctx||[]).length}\n${goal}`;
+
     nodes.push({ data:{ id:n.id, lbl, rule:n.rule }});
     (n.premises||[]).forEach(p => edges.push({ data:{ id:`${p}->${n.id}`, source:p, target:n.id }}));
   });
