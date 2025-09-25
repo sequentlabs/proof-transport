@@ -1,4 +1,5 @@
 # Proof-Transport
+[![CI](https://github.com/sequentlabs/proof-transport/actions/workflows/ci.yml/badge.svg)](https://github.com/sequentlabs/proof-transport/actions/workflows/ci.yml)
 [![Build](https://img.shields.io/github/actions/workflow/status/sequentlabs/proof-transport/ci.yml?branch=main)](https://github.com/sequentlabs/proof-transport/actions)
 [![License](https://img.shields.io/badge/license-MIT-blue.svg)](LICENSE)
 [![Live Demo](https://img.shields.io/badge/demo-online-green)](https://sequentlabs.github.io/proof-transport/)
