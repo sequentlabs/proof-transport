@@ -6,16 +6,27 @@ on:
     branches: [ main ]
 
 jobs:
-  build:
+  build-test-demo:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v3
+
       - uses: actions-rs/toolchain@v1
         with:
           toolchain: stable
           profile: minimal
           override: true
+
       - name: Build
         run: cargo build --release
+
       - name: Unit tests
         run: cargo test --verbose
+
+      - name: Install ajv-cli
+        run: npm install -g ajv-cli@5
+
+      - name: Validate JSON examples
+        run: |
+          ajv validate -s schemas/proof.schema.json -d docs/data/proof_with_cut.json
+          ajv validate -s schemas/proof.schema.json -d docs/data/proof_cut_eliminated.json
