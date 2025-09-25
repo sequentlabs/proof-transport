@@ -43,3 +43,14 @@ Automatically transport sequent proofs across rule-set updates (e.g., remove `Cu
 - Academic collaborators intend to trial Proof‑Transport in verification workflows  
 
 > “We plan to trial Proof‑Transport to preserve proofs across kernel changes.” — mark@mazlo.io
+
+---
+
+## 👥 About Us
+**SequentLabs** is building resilient proof infrastructure.  
+
+- Core maintainer: lead developer & architect  
+- Collaborators: Lean/Coq/Agda researchers and cryptography engineers  
+- Community: open to contributors via GitHub issues and discussions  
+
+Our mission: keep formal proofs alive under kernel evolution, lowering re-verification costs for critical systems.
