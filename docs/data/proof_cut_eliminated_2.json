@@ -1,0 +1,8 @@
+{"format":"tesl-deriv/v1","language":"prop",
+ "sequent":{"ctx":[{"tag":"var","n":0}],"goal":{"tag":"var","n":2}},
+ "nodes":[
+  {"id":"n1","rule":"Id","sequent":{"ctx":[{"tag":"var","n":0}],"goal":{"tag":"var","n":0}},"premises":[]},
+  {"id":"n2","rule":"Id","sequent":{"ctx":[{"tag":"var","n":1}],"goal":{"tag":"var","n":1}},"premises":[]},
+  {"id":"n3","rule":"Id","sequent":{"ctx":[{"tag":"var","n":2}],"goal":{"tag":"var","n":2}},"premises":[]}
+ ],
+ "root":"n3","proof_hash":"demo-hash-002-elim","built_at":3}
