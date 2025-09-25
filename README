@@ -46,7 +46,7 @@ Automatically transport sequent proofs across rule-set updates (e.g., remove `Cu
 
 ---
 
-## 👥 About Us
+##  About Us
 **SequentLabs** is building resilient proof infrastructure.  
 
 - Core maintainer: lead developer & architect  
@@ -54,3 +54,30 @@ Automatically transport sequent proofs across rule-set updates (e.g., remove `Cu
 - Community: open to contributors via GitHub issues and discussions  
 
 Our mission: keep formal proofs alive under kernel evolution, lowering re-verification costs for critical systems.
+
+##  Timeline (6 months)
+
+| Month | Milestones |
+|-------|------------|
+| 1–2   | FO substitution correctness tests; golden FO proofs |
+| 2–3   | Exporter prototypes (Lean subset, Coq via SerAPI) |
+| 3–4   | Benchmarks on large DAGs; performance memo results; web viz polish |
+| 4–5   | External trial with partner; ZK contract spec draft |
+| 5–6   | Paper draft (CPP/LFMTP); community onboarding (3+ contributors) |
+
+
+##  Evaluation & Metrics
+
+- ≥10 golden tests (prop + FO)  
+- Transport 10k-node DAG < 500ms  
+- 2 exporters (Lean/Coq subsets)  
+- ≥3 external contributors/users  
+- 1 artifact badge at CPP/LFMTP  
+- Public web viz demo online
+
+##  Who Uses Proof-Transport
+
+- **Formal verification teams:** keep Lean/Coq proofs valid when kernels evolve.  
+- **Blockchain auditors:** resilient smart-contract proofs when policies change.  
+- **AI safety researchers:** preserve long-lived safety proofs as specs update.  
+- **Compliance teams:** machine-checkable continuity of evidence under evolving standards.
