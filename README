@@ -7,6 +7,12 @@
 **One-liner:** keep proofs valid when the proof kernel changes. Transport sequent proofs across rule-set updates (e.g., remove `Cut`) and emit stability certificates.
 
 ## Quickstart
+## ✅ What CI checks automatically
+- Rust crate builds successfully
+- JSON examples are schema-valid
+- BEFORE proof contains a `Cut`
+- AFTER proof has no `Cut`
+- Node count decreases (fragility drop)
 ```bash
 cargo build --release
 ./target/release/tesl version
