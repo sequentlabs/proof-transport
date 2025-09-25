@@ -1,8 +1,15 @@
 # Proof-Transport
 
-[![CI](https://github.com/sequentlabs/proof-transport/actions/workflows/ci.yml/badge.svg?branch=main)](https://github.com/sequentlabs/proof-transport/actions/workflows/ci.yml)
-[![License](https://img.shields.io/badge/license-MIT-blue.svg)](https://github.com/sequentlabs/proof-transport/blob/main/LICENSE)
-[![Live Demo](https://img.shields.io/badge/demo-online-green)](https://sequentlabs.github.io/proof-transport/)
+<a href="https://github.com/sequentlabs/proof-transport/actions/workflows/ci.yml">
+  <img alt="CI" src="https://github.com/sequentlabs/proof-transport/actions/workflows/ci.yml/badge.svg?branch=main">
+</a>
+<a href="https://github.com/sequentlabs/proof-transport/blob/main/LICENSE">
+  <img alt="License: MIT" src="https://img.shields.io/badge/License-MIT-blue.svg">
+</a>
+<a href="https://sequentlabs.github.io/proof-transport/">
+  <img alt="Live demo" src="https://img.shields.io/badge/demo-online-green">
+</a>
+
 
 **Proof-Transport**: keep proofs valid when the proof kernel changes.  
 Automatically transport sequent proofs across rule-set updates (e.g., remove `Cut`) and emit stability certificates.
