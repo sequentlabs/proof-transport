@@ -30,3 +30,19 @@ jobs:
         run: |
           ajv validate -s schemas/proof.schema.json -d docs/data/proof_with_cut.json
           ajv validate -s schemas/proof.schema.json -d docs/data/proof_cut_eliminated.json
+      - name: Demo pipeline check
+        run: |
+          # BEFORE should contain a Cut
+          grep -q '"rule":"Cut"' docs/data/proof_with_cut.json
+
+          # AFTER should NOT contain a Cut
+          ! grep -q '"rule":"Cut"' docs/data/proof_cut_eliminated.json
+
+          # Simple fragility metric = count nodes
+          before_nodes=$(jq '.nodes | length' docs/data/proof_with_cut.json)
+          after_nodes=$(jq '.nodes | length' docs/data/proof_cut_eliminated.json)
+
+          echo "Nodes before=$before_nodes after=$after_nodes"
+          if [ "$after_nodes" -ge "$before_nodes" ]; then
+            echo "Fragility did not drop" && exit 1
+          fi
