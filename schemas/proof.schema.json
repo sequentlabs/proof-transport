@@ -1,0 +1,12 @@
+{
+  "$schema":"http://json-schema.org/draft-07/schema#",
+  "title":"Proof",
+  "type":"object",
+  "required":["format","language","nodes","root"],
+  "properties":{
+    "format":{"const":"tesl-deriv/v1"},
+    "language":{"enum":["prop","fo"]},
+    "nodes":{"type":"array","items":{"type":"object"}},
+    "root":{"type":"string"}
+  }
+}
