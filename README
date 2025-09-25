@@ -1,7 +1,7 @@
 # Proof-Transport
 
-[![CI](https://github.com/sequentlabs/proof-transport/actions/workflows/ci.yml/badge.svg)](https://github.com/sequentlabs/proof-transport/actions/workflows/ci.yml)
-[![License](https://img.shields.io/badge/license-MIT-blue.svg)](LICENSE)
+[![CI](https://github.com/sequentlabs/proof-transport/actions/workflows/ci.yml/badge.svg?branch=main)](https://github.com/sequentlabs/proof-transport/actions/workflows/ci.yml)
+[![License](https://img.shields.io/badge/license-MIT-blue.svg)](https://github.com/sequentlabs/proof-transport/blob/main/LICENSE)
 [![Live Demo](https://img.shields.io/badge/demo-online-green)](https://sequentlabs.github.io/proof-transport/)
 
 **Proof-Transport**: keep proofs valid when the proof kernel changes.  
