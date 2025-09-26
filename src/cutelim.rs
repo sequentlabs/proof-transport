@@ -1,55 +1,16 @@
 // src/cutelim.rs
+//
+// Simple cut-elimination used by the tests:
+// - If the root is a Cut with two premises, replace the root with the
+//   first premise and drop all nodes unreachable from the new root.
+// - Repeat until no more root-level cuts remain.
+
 use crate::ast::{Proof, ProofNode};
 use std::collections::{HashMap, HashSet};
 
-/// Eliminate a root `Cut` (if present):
-/// - If the proof's root rule is `Cut`, set the root to the first premise
-///   and prune nodes unreachable from the new root.
-/// - Otherwise, return the proof unchanged.
-pub fn cut_eliminate_root(p: &Proof) -> Proof {
-    let mut q = p.clone();
-
-    // find root node index
-    let Some(root_idx) = q.nodes.iter().position(|n| n.id == q.root) else {
-        return q;
-    };
-
-    // NOTE: the example JSON uses capitalized rule names, e.g. "Cut"
-    if q.nodes[root_idx].rule != "Cut" {
-        return q;
-    }
-
-    // a Cut must have two premises; if not, leave as-is
-    if q.nodes[root_idx].premises.len() != 2 {
-        return q;
-    }
-
-    // new root is the first premise of the Cut
-    let new_root = q.nodes[root_idx].premises[0].clone();
-    q.root = new_root;
-
-    // drop anything no longer reachable from the new root
-    prune_reachable(&mut q);
-    q
-}
-
-/// Very simple "driver": repeatedly eliminate a root `Cut` while one exists.
-/// This is safe for our examples (which only require removing root `Cut`s).
-pub fn cut_eliminate_all(p: &Proof) -> Proof {
-    let mut cur = p.clone();
-    loop {
-        let next = cut_eliminate_root(&cur);
-        if next.root == cur.root {
-            // no root Cut eliminated; we're done
-            return cur;
-        }
-        cur = next;
-    }
-}
-
 /// Keep only nodes reachable from `p.root`.
 fn prune_reachable(p: &mut Proof) {
-    // Build a lookup map: id -> node
+    // Snapshot the graph so we can traverse without borrowing `p.nodes`.
     let map: HashMap<String, ProofNode> = p
         .nodes
         .iter()
@@ -58,22 +19,54 @@ fn prune_reachable(p: &mut Proof) {
         .collect();
 
     let mut keep: HashSet<String> = HashSet::new();
-    let mut stack: Vec<ProofNode> = Vec::new();
+    let mut stack = vec![p.root.clone()];
 
-    if let Some(root_node) = map.get(&p.root) {
-        stack.push(root_node.clone());
-    }
-
-    while let Some(n) = stack.pop() {
-        if keep.insert(n.id.clone()) {
-            for pr in n.premises.iter() {
-                if let Some(child) = map.get(pr) {
-                    stack.push(child.clone());
+    while let Some(id) = stack.pop() {
+        if keep.insert(id.clone()) {
+            if let Some(n) = map.get(&id) {
+                for pr in &n.premises {
+                    stack.push(pr.clone());
                 }
             }
         }
     }
 
-    // Retain only kept nodes (by id)
+    // Drop all nodes that are not reachable from the (possibly new) root.
     p.nodes.retain(|n| keep.contains(&n.id));
+}
+
+/// If the root is a Cut(n1, n2), set root := n1 and prune unreachable nodes.
+/// Otherwise, return the proof unchanged.
+pub fn cut_eliminate_root(p: &Proof) -> Proof {
+    let mut q = p.clone();
+
+    // Locate the current root node.
+    let Some(root_idx) = q.nodes.iter().position(|n| n.id == q.root) else {
+        return q;
+    };
+
+    // Make the rule check case-insensitive to match "Cut"/"cut".
+    let rule = q.nodes[root_idx].rule.to_ascii_lowercase();
+    if rule != "cut" || q.nodes[root_idx].premises.len() != 2 {
+        return q; // nothing to do
+    }
+
+    // Replace the root by the first premise of the Cut and clean up.
+    let new_root_id = q.nodes[root_idx].premises[0].clone();
+    q.root = new_root_id;
+    prune_reachable(&mut q);
+    q
+}
+
+/// Repeatedly apply `cut_eliminate_root` until it no-ops (fixpoint).
+pub fn cut_eliminate_all(p: &Proof) -> Proof {
+    let mut prev = p.clone();
+    loop {
+        let next = cut_eliminate_root(&prev);
+        // Fixpoint reached if nothing structural changed.
+        if next.root == prev.root && next.nodes.len() == prev.nodes.len() {
+            return prev;
+        }
+        prev = next;
+    }
 }
