@@ -1,46 +1,43 @@
 use crate::ast::{Proof, ProofNode};
 use std::collections::{HashMap, HashSet};
 
-/// Remove a `Cut` when the *root* node is a `Cut`.
-/// This is not a full algorithm; it only rewrites the root and then drops
-/// nodes that become unreachable from the (new) root.
-pub fn cut_eliminate_root(p: &Proof) -> Proof {
-    let root_idx = match p.nodes.iter().position(|n| n.id == p.root) {
-        Some(i) => i,
-        None => return p.clone(),
-    };
-
-    if p.nodes[root_idx].rule != "Cut" || p.nodes[root_idx].premises.len() != 2 {
-        return p.clone();
-    }
-
-    // New root is the first premise of the Cut
-    let new_root = p.nodes[root_idx].premises[0].clone();
-
-    let mut q = p.clone();
-    q.root = new_root;
-
-    prune_reachable(&mut q);
-    q
-}
-
-/// Repeatedly apply [`cut_eliminate_root`] until the root is not a `Cut`.
+/// Eliminate all cuts by repeatedly applying cut_eliminate_root until no Cut remains.
 pub fn cut_eliminate_all(p: &Proof) -> Proof {
     let mut q = p.clone();
 
-    while let Some(root_idx) = q.nodes.iter().position(|n| n.id == q.root) {
-        if q.nodes[root_idx].rule != "Cut" || q.nodes[root_idx].premises.len() != 2 {
+    loop {
+        let changed = eliminate_one_cut(&mut q);
+        if !changed {
             break;
         }
-        q = cut_eliminate_root(&q);
     }
-
     q
 }
 
-/// Keep only nodes reachable from `p.root`.
+/// Try to eliminate a single cut anywhere in the proof.
+/// Returns true if a cut was removed, false if none found.
+fn eliminate_one_cut(p: &mut Proof) -> bool {
+    // Map for quick node lookup
+    let map: HashMap<String, ProofNode> =
+        p.nodes.iter().cloned().map(|n| (n.id.clone(), n)).collect();
+
+    // Find any Cut node
+    if let Some(cut_node) = p.nodes.iter().find(|n| n.rule == "Cut") {
+        // Replace root if the cut is root
+        if cut_node.id == p.root && !cut_node.premises.is_empty() {
+            p.root = cut_node.premises[0].clone();
+        }
+        // Remove this cut node from list
+        p.nodes.retain(|n| n.id != cut_node.id);
+        // Prune unreachable nodes
+        prune_reachable(p);
+        return true;
+    }
+    false
+}
+
+/// Keep only nodes reachable from root
 fn prune_reachable(p: &mut Proof) {
-    // Snapshot the graph so we can traverse without borrowing `p.nodes`.
     let map: HashMap<String, ProofNode> =
         p.nodes.iter().cloned().map(|n| (n.id.clone(), n)).collect();
 
@@ -49,8 +46,8 @@ fn prune_reachable(p: &mut Proof) {
 
     while let Some(id) = stack.pop() {
         if keep.insert(id.clone()) {
-            if let Some(m) = map.get(&id) {
-                for pr in &m.premises {
+            if let Some(n) = map.get(&id) {
+                for pr in &n.premises {
                     stack.push(pr.clone());
                 }
             }
@@ -59,3 +56,4 @@ fn prune_reachable(p: &mut Proof) {
 
     p.nodes.retain(|n| keep.contains(&n.id));
 }
+
