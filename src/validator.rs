@@ -29,10 +29,7 @@ pub fn validate_local_wf(proof: &Proof) -> Result<()> {
     }
 
     for ProofNode {
-        id,
-        rule,
-        premises,
-        ..
+        id, rule, premises, ..
     } in &proof.nodes
     {
         if rule_from_str(rule).is_none() {
