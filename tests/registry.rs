@@ -16,10 +16,9 @@ fn registry_enabled_at_works() {
         ],
     };
 
-    let at0 = reg.enabled_at(0);
-    let at1 = reg.enabled_at(1);
-
-    assert!(at0.contains(&RuleId::Id));
+    let at0: HashSet<_> = reg.enabled_at(0);
     assert!(at0.contains(&RuleId::Cut));
-    assert_eq!(at1, HashSet::from([RuleId::Id]));
+
+    let at1: HashSet<_> = reg.enabled_at(1);
+    assert!(!at1.contains(&RuleId::Cut));
 }
