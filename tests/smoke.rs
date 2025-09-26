@@ -1,21 +1,23 @@
-// tests/smoke.rs
-use std::fs::File;
-use serde_json::from_reader;
-
-// NOTE: the crate name in tests is the package name with '-' changed to '_':
-// `proof-transport` -> `proof_transport`
 use proof_transport::{
     ast::Proof,
     frag::fragility_score,
     validator::validate_local_wf,
+    cutelim::cut_eliminate_all,
 };
+use std::fs::File;
+use serde_json::from_reader;
 
 #[test]
 fn loads_and_scores_example() {
-    let base = env!("CARGO_MANIFEST_DIR");
-    let path = format!("{}/examples/proof_with_cut.json", base);
+    let p: Proof = from_reader(File::open("./examples/proof_with_cut.json").unwrap()).unwrap();
+    validate_local_wf(&p).unwrap();
+    assert!(fragility_score(&p) >= 1);
+}
 
-    let p: Proof = from_reader(File::open(&path).expect("open example")).expect("decode JSON");
-    validate_local_wf(&p).expect("well-formed proof");
-    assert!(fragility_score(&p) >= 1, "fragility should be non-zero with Cut present");
+#[test]
+fn cutelim_identity_roundtrip() {
+    let p: Proof = from_reader(File::open("./examples/proof_with_cut.json").unwrap()).unwrap();
+    let q = cut_eliminate_all(&p);
+    // For now, should just equal input (identity placeholder)
+    assert_eq!(p.nodes.len(), q.nodes.len());
 }
