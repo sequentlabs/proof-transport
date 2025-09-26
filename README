@@ -14,6 +14,10 @@ Automatically transport sequent proofs across rule-set updates (e.g., remove `Cu
 - 🌍 [Live demo explorer](https://sequentlabs.github.io/proof-transport/)
 - ✅ [Latest CI run](https://github.com/sequentlabs/proof-transport/actions)
 
+## Docs
+- [Architecture](docs/architecture.md)
+- [Worked Example](docs/worked-example.md)
+
 ---
 
 ## ✅ What CI checks
