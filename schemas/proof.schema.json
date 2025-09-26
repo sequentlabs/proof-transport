@@ -11,11 +11,24 @@
         "type": "object",
         "properties": {
           "id": { "type": "string" },
-          "rule": { "type": "string" },
+          "rule": {
+            "type": "string",
+            "enum": [
+              "Id", "Cut",
+              "AndL", "AndR",
+              "OrL1", "OrL2", "OrR1", "OrR2",
+              "ImplL", "ImplR",
+              "Forall", "Exists",
+              "Bot", "Top"
+            ]
+          },
           "sequent": {
             "type": "object",
             "properties": {
-              "ctx": { "type": "array", "items": { "type": "object" } },
+              "ctx": {
+                "type": "array",
+                "items": { "type": "object" }
+              },
               "goal": { "type": "object" }
             },
             "required": ["ctx", "goal"]
