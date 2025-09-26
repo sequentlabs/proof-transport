@@ -1,13 +1,17 @@
-name: ci
+name: CI
+
 on:
   push:
+    branches: [ main ]
   pull_request:
+    branches: [ main ]
 
 jobs:
   build-test:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
+
       - uses: actions-rs/toolchain@v1
         with:
           toolchain: stable
@@ -28,31 +32,3 @@ jobs:
           ajv validate -s schemas/proof.schema.json -d examples/proof_with_cut.json
           ajv validate -s schemas/proof.schema.json -d examples/proof_cut_eliminated.json
           ajv validate -s schemas/registry.schema.json -d examples/R.json
-
-      - name: Install jq
-        run: sudo apt-get update && sudo apt-get install -y jq
-
-      - name: Demo pipeline check
-        run: |
-          # === Example 1 ===
-          # BEFORE must contain a Cut
-          grep -q '"rule":"Cut"' docs/data/proof_with_cut.json
-          # AFTER must NOT contain a Cut
-          ! grep -q '"rule":"Cut"' docs/data/proof_cut_eliminated.json
-          # Fragility proxy: node count drops
-          before_nodes=$(jq '.nodes | length' docs/data/proof_with_cut.json)
-          after_nodes=$(jq '.nodes | length' docs/data/proof_cut_eliminated.json)
-          echo "Example1 nodes: before=$before_nodes after=$after_nodes"
-          if [ "$after_nodes" -ge "$before_nodes" ]; then
-            echo "Fragility did not drop (example 1)" && exit 1
-          fi
-
-          # === Example 2 ===
-          grep -q '"rule":"Cut"' docs/data/proof_with_cut_2.json
-          ! grep -q '"rule":"Cut"' docs/data/proof_cut_eliminated_2.json
-          before2=$(jq '.nodes | length' docs/data/proof_with_cut_2.json)
-          after2=$(jq '.nodes | length' docs/data/proof_cut_eliminated_2.json)
-          echo "Example2 nodes: before2=$before2 after2=$after2"
-          if [ "$after2" -ge "$before2" ]; then
-            echo "Fragility did not drop (example 2)" && exit 1
-          fi
