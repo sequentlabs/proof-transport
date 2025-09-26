@@ -27,7 +27,10 @@ pub fn validate_local_wf(proof: &Proof) -> Result<()> {
         bail!("root id not found: {}", proof.root);
     }
 
-    for ProofNode { id, rule, premises, .. } in &proof.nodes {
+    for ProofNode {
+        id, rule, premises, ..
+    } in &proof.nodes
+    {
         if rule_from_str(rule).is_none() {
             bail!("unknown rule at node {}: {}", id, rule);
         }
