@@ -16,8 +16,12 @@ fn loads_and_scores_example() {
 
 #[test]
 fn cutelim_identity_roundtrip() {
-    let p: Proof = from_reader(File::open("./examples/proof_with_cut.json").unwrap()).unwrap();
-    let q = cut_eliminate_all(&p);
-    // For now, should just equal input (identity placeholder)
-    assert_eq!(p.nodes.len(), q.nodes.len());
+    let before = load_proof("examples/proof_with_cut.json");
+    let after = cut_eliminate_root(&before);
+
+    // New relaxed check: fragility should decrease after cut-elimination
+    assert!(
+        fragility_score(&after) < fragility_score(&before),
+        "Fragility should decrease after cut-elimination"
+    );
 }
