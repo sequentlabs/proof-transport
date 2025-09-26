@@ -1,10 +1,7 @@
 name: CI
-
 on:
   push:
-    branches: [ main ]
   pull_request:
-    branches: [ main ]
 
 jobs:
   build-test:
@@ -16,6 +13,7 @@ jobs:
         with:
           toolchain: stable
           profile: minimal
+          components: rustfmt, clippy
           override: true
 
       - name: Build
@@ -24,11 +22,18 @@ jobs:
       - name: Test
         run: cargo test --verbose
 
+      - name: Format check
+        run: cargo fmt --all -- --check
+
+      - name: Clippy
+        run: cargo clippy -- -D warnings
+
       - name: Install ajv-cli
-        run: npm install -g ajv-cli
+        run: npm i -g ajv-cli
 
       - name: Validate JSON examples
         run: |
           ajv validate -s schemas/proof.schema.json -d examples/proof_with_cut.json
           ajv validate -s schemas/proof.schema.json -d examples/proof_cut_eliminated.json
+          ajv validate -s schemas/proof.schema.json -d examples/or_proof_with_cut.json
           ajv validate -s schemas/registry.schema.json -d examples/R.json
