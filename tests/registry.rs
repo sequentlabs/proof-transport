@@ -1,5 +1,5 @@
-use proof_transport::registry::{Registry, RuleId, TimeSlice};
 use std::collections::HashSet;
+use proof_transport::registry::{Registry, RuleId, TimeSlice};
 
 #[test]
 fn registry_enabled_at_works() {
@@ -10,9 +10,11 @@ fn registry_enabled_at_works() {
         ],
     };
 
-    let t0 = reg.enabled_at(0);
-    let t1 = reg.enabled_at(1);
+    let at0: HashSet<_> = reg.enabled_at(0);
+    assert!(at0.contains(&RuleId::Cut));
+    assert!(at0.contains(&RuleId::Id));
 
-    assert!(t0.contains(&RuleId::Id) && t0.contains(&RuleId::Cut));
-    assert!(t1.contains(&RuleId::Id) && !t1.contains(&RuleId::Cut));
+    let at1: HashSet<_> = reg.enabled_at(1);
+    assert!(!at1.contains(&RuleId::Cut));
+    assert!(at1.contains(&RuleId::Id));
 }
