@@ -1,12 +1,11 @@
 use std::fs::File;
 use serde_json::from_reader;
 
-use proof_transport::{
-    ast::Proof,
-    frag::fragility_score,
-    cutelim::cut_eliminate_root,
-    validator::validate_local_wf,
-};
+use proof_transport::ast::Proof;
+use proof_transport::frag::fragility_score;
+use proof_transport::validator::validate_local_wf;
+use proof_transport::cutelim::{cut_eliminate_all, cut_eliminate_root};
+
 
 fn load_proof(path: &str) -> Proof {
     from_reader(File::open(path).expect("open example")).expect("decode JSON")
