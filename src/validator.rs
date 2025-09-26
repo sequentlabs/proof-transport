@@ -1,6 +1,8 @@
-use crate::ast::Proof;
-use crate::registry::RuleId;
 use anyhow::{bail, Result};
+use std::collections::HashSet;
+
+use crate::ast::{Proof, ProofNode};
+use crate::registry::RuleId;
 
 fn rule_from_str(s: &str) -> Option<RuleId> {
     use RuleId::*;
@@ -21,9 +23,7 @@ fn rule_from_str(s: &str) -> Option<RuleId> {
 }
 
 pub fn validate_local_wf(proof: &Proof) -> Result<()> {
-    let ids: HashSet<_> = proof.nodes.iter().map(|n| n.id.as_str()).collect();
-
-    if !ids.contains(proof.root.as_str()) {
+    if !proof.nodes.iter().any(|n| n.id == proof.root) {
         bail!("root id not found: {}", proof.root);
     }
 
@@ -31,11 +31,12 @@ pub fn validate_local_wf(proof: &Proof) -> Result<()> {
         if rule_from_str(rule).is_none() {
             bail!("unknown rule at node {}: {}", id, rule);
         }
-        for p in premises {
-            if !ids.contains(p.as_str()) {
-                bail!("premise {} referenced by {} not found", p, id);
+        for prem in premises {
+            if !proof.nodes.iter().any(|n| &n.id == prem) {
+                bail!("premise {} of node {} not found", prem, id);
             }
         }
     }
+
     Ok(())
 }
