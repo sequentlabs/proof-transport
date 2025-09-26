@@ -1,4 +1,4 @@
 #[test]
 fn always_passes() {
-    assert!(true);
+    assert_eq!(2 + 2, 4);
 }
