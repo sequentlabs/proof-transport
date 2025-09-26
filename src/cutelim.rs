@@ -1,49 +1,43 @@
 use crate::ast::{Proof, ProofNode};
 use std::collections::{HashMap, HashSet};
 
-/// If the root rule is a `Cut`, replace the proof root with its first premise
-/// and drop nodes that became unreachable.
+/// Remove a `Cut` when the *root* node is a `Cut`.
+/// This is not a full algorithm; it only rewrites the root and then drops
+/// nodes that become unreachable from the (new) root.
 pub fn cut_eliminate_root(p: &Proof) -> Proof {
-    if p.nodes.is_empty() {
+    let root_idx = match p.nodes.iter().position(|n| n.id == p.root) {
+        Some(i) => i,
+        None => return p.clone(),
+    };
+
+    if p.nodes[root_idx].rule != "Cut" || p.nodes[root_idx].premises.len() != 2 {
         return p.clone();
     }
 
+    // New root is the first premise of the Cut
+    let new_root = p.nodes[root_idx].premises[0].clone();
+
     let mut q = p.clone();
-
-    // Find the index of the current root node.
-    let root_idx = match q.nodes.iter().position(|n| n.id == q.root) {
-        Some(i) => i,
-        None => return q,
-    };
-
-    // Only act when the root is a Cut.
-    if q.nodes[root_idx].rule != "Cut" {
-        return q;
-    }
-
-    // Use the first premise of the Cut as the new root (defensive check).
-    if q.nodes[root_idx].premises.is_empty() {
-        // Malformed Cut; leave as-is.
-        return q;
-    }
-    let new_root = q.nodes[root_idx].premises[0].clone();
     q.root = new_root;
 
     prune_reachable(&mut q);
     q
 }
 
-/// Very naive "eliminate all": repeatedly apply `cut_eliminate_root` while the
-/// root changes. (Sufficient for the current tests.)
+/// Repeatedly apply [`cut_eliminate_root`] until the root is not a `Cut`.
 pub fn cut_eliminate_all(p: &Proof) -> Proof {
-    let mut current = p.clone();
+    let mut q = p.clone();
     loop {
-        let next = cut_eliminate_root(&current);
-        if next.root == current.root {
-            return next;
+        let root_idx = match q.nodes.iter().position(|n| n.id == q.root) {
+            Some(i) => i,
+            None => break,
+        };
+        if q.nodes[root_idx].rule != "Cut" || q.nodes[root_idx].premises.len() != 2 {
+            break;
         }
-        current = next;
+        q = cut_eliminate_root(&q);
     }
+    q
 }
 
 /// Keep only nodes reachable from `p.root`.
@@ -57,8 +51,8 @@ fn prune_reachable(p: &mut Proof) {
 
     while let Some(id) = stack.pop() {
         if keep.insert(id.clone()) {
-            if let Some(n) = map.get(&id) {
-                for pr in &n.premises {
+            if let Some(m) = map.get(&id) {
+                for pr in &m.premises {
                     stack.push(pr.clone());
                 }
             }
