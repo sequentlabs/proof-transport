@@ -1,24 +1,22 @@
 {
-  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "title": "Registry",
   "type": "object",
-  "required": ["times"],
   "properties": {
     "times": {
       "type": "array",
       "items": {
         "type": "object",
-        "required": ["t", "enabled_rules"],
         "properties": {
           "t": { "type": "integer" },
           "enabled_rules": {
             "type": "array",
-            "items": {
-              "type": "string",
-              "enum": ["Id","BotL","AndR","AndL1","AndL2","OrR1","OrR2","OrL","ImpR","ImpL","Cut"]
-            }
+            "items": { "type": "string" }
           }
-        }
+        },
+        "required": ["t", "enabled_rules"]
       }
     }
-  }
+  },
+  "required": ["times"]
 }
