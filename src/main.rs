@@ -3,7 +3,7 @@ use clap::{Parser, Subcommand};
 use serde_json::from_reader;
 use std::fs::File;
 
-use proof_transport::{ast::Proof, frag::fragility_score, validate_local_wf};
+use proof_transport::{ast::Proof, frag::fragility_score, validator::validate_local_wf};
 
 #[derive(Parser)]
 #[command(name = "proof-transport", version)]
@@ -14,27 +14,25 @@ struct Cli {
 
 #[derive(Subcommand)]
 enum Cmd {
-    /// Print fragility score of a proof JSON file
-    Fragility { file: String },
-    /// Validate local well-formedness of a proof JSON file
-    Validate { file: String },
+    Fragility { path: String },
+    Validate { path: String },
 }
 
-fn read_proof(path: &str) -> Result<Proof> {
+fn load(path: &str) -> Result<Proof> {
     Ok(from_reader(File::open(path)?)?)
 }
 
 fn main() -> Result<()> {
     let cli = Cli::parse();
     match cli.cmd {
-        Cmd::Fragility { file } => {
-            let p = read_proof(&file)?;
+        Cmd::Fragility { path } => {
+            let p = load(&path)?;
             println!("{}", fragility_score(&p));
         }
-        Cmd::Validate { file } => {
-            let p = read_proof(&file)?;
+        Cmd::Validate { path } => {
+            let p = load(&path)?;
             validate_local_wf(&p)?;
-            println!("OK");
+            println!("ok");
         }
     }
     Ok(())
