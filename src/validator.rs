@@ -1,5 +1,4 @@
 use anyhow::{bail, Result};
-use std::collections::HashSet;
 
 use crate::ast::{Proof, ProofNode};
 use crate::registry::RuleId;
