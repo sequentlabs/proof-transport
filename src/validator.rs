@@ -21,23 +21,19 @@ fn rule_from_str(s: &str) -> Option<RuleId> {
 }
 
 pub fn validate_local_wf(proof: &Proof) -> Result<()> {
-    use crate::ast::ProofNode;
+    let ids: HashSet<_> = proof.nodes.iter().map(|n| n.id.as_str()).collect();
 
-    let ids: std::collections::HashSet<&str> = proof.nodes.iter().map(|n| n.id.as_str()).collect();
     if !ids.contains(proof.root.as_str()) {
         bail!("root id not found: {}", proof.root);
     }
 
-    for ProofNode {
-        id, rule, premises, ..
-    } in &proof.nodes
-    {
+    for ProofNode { id, rule, premises, .. } in &proof.nodes {
         if rule_from_str(rule).is_none() {
             bail!("unknown rule at node {}: {}", id, rule);
         }
-        for pid in premises {
-            if !ids.contains(pid.as_str()) {
-                bail!("premise {} of node {} not found", pid, id);
+        for p in premises {
+            if !ids.contains(p.as_str()) {
+                bail!("premise {} referenced by {} not found", p, id);
             }
         }
     }
