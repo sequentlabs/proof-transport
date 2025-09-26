@@ -4,10 +4,9 @@ use serde_json::Value;
 #[test]
 fn load_example_proofs() {
     let files = [
-        "docs/data/proof_with_cut.json",
-        "docs/data/proof_cut_eliminated.json",
-        "docs/data/proof_with_cut_2.json",
-        "docs/data/proof_cut_eliminated_2.json",
+        "examples/proof_with_cut.json",
+        "examples/proof_cut_eliminated.json",
+        "examples/R.json",
     ];
 
     for f in files {
