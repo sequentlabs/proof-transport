@@ -1,46 +1,22 @@
-// tests/success.rs
-//
-// Purpose: "does the public API actually work end-to-end?"
-//
-// This test loads a real example proof, calls the public entry points
-// (fragility scoring and validator), and asserts basic properties.
-// No function-pointer casts here, so we avoid brittle typing issues.
-
 use std::fs::File;
 use std::io::Read;
 
-use proof_transport::{
-    ast::Proof,
-    frag::fragility_score,
-    validator::validate_local_wf,
-};
+use proof_transport::{ast::Proof, frag::fragility_score, validate_local_wf};
 
 fn load_proof(path: &str) -> Proof {
     let manifest = env!("CARGO_MANIFEST_DIR");
     let full = format!("{}/{}", manifest, path);
-
-    let mut s = String::new();
-    File::open(&full)
-        .expect("open example JSON")
-        .read_to_string(&mut s)
-        .expect("read example JSON");
-
-    serde_json::from_str(&s).expect("decode example JSON")
+    let mut data = String::new();
+    File::open(full)
+        .expect("open example")
+        .read_to_string(&mut data)
+        .expect("read");
+    serde_json::from_str(&data).expect("decode JSON")
 }
 
 #[test]
-fn public_api_works_on_example() {
-    // use the same toy example the other tests use
+fn example_proof_is_valid_and_has_fragility() {
     let p = load_proof("examples/proof_with_cut.json");
-
-    // validator should succeed
-    validate_local_wf(&p).expect("validator should accept the example");
-
-    // scoring should be defined and non-zero for the example with a root Cut
-    let score = fragility_score(&p);
-    assert!(
-        score >= 1,
-        "fragility score should be >= 1 for a proof with a root Cut; got {}",
-        score
-    );
+    validate_local_wf(&p).expect("well-formed proof");
+    assert!(fragility_score(&p) >= 1);
 }
