@@ -27,16 +27,14 @@ pub fn cut_eliminate_root(p: &Proof) -> Proof {
 /// Repeatedly apply [`cut_eliminate_root`] until the root is not a `Cut`.
 pub fn cut_eliminate_all(p: &Proof) -> Proof {
     let mut q = p.clone();
-    loop {
-        let root_idx = match q.nodes.iter().position(|n| n.id == q.root) {
-            Some(i) => i,
-            None => break,
-        };
+
+    while let Some(root_idx) = q.nodes.iter().position(|n| n.id == q.root) {
         if q.nodes[root_idx].rule != "Cut" || q.nodes[root_idx].premises.len() != 2 {
             break;
         }
         q = cut_eliminate_root(&q);
     }
+
     q
 }
 
