@@ -1,16 +1,13 @@
-name: CI
+name: ci
 on:
   push:
-    branches: [ main ]
   pull_request:
-    branches: [ main ]
 
 jobs:
-  build-test-demo:
+  build-test:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v3
-
+      - uses: actions/checkout@v4
       - uses: actions-rs/toolchain@v1
         with:
           toolchain: stable
@@ -18,20 +15,19 @@ jobs:
           override: true
 
       - name: Build
-        run: cargo build --release
+        run: cargo build --verbose
 
-      - name: Unit tests
+      - name: Test
         run: cargo test --verbose
 
       - name: Install ajv-cli
-        run: npm install -g ajv-cli@5
+        run: npm i -g ajv-cli
 
       - name: Validate JSON examples
         run: |
-          ajv validate -s schemas/proof.schema.json -d docs/data/proof_with_cut.json
-          ajv validate -s schemas/proof.schema.json -d docs/data/proof_cut_eliminated.json
-          ajv validate -s schemas/proof.schema.json -d docs/data/proof_with_cut_2.json
-          ajv validate -s schemas/proof.schema.json -d docs/data/proof_cut_eliminated_2.json
+          ajv validate -s schemas/proof.schema.json -d examples/proof_with_cut.json
+          ajv validate -s schemas/proof.schema.json -d examples/proof_cut_eliminated.json
+          ajv validate -s schemas/registry.schema.json -d examples/R.json
 
       - name: Install jq
         run: sudo apt-get update && sudo apt-get install -y jq
