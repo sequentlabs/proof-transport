@@ -1,0 +1,32 @@
+{
+  "root": "n0",
+  "nodes": [
+    {
+      "id": "n1",
+      "rule": "Id",
+      "sequent": {
+        "ctx": [{ "tag": "Var", "fields": "A" }],
+        "goal": { "tag": "Var", "fields": "A" }
+      },
+      "premises": []
+    },
+    {
+      "id": "n2",
+      "rule": "Id",
+      "sequent": {
+        "ctx": [{ "tag": "Var", "fields": "B" }],
+        "goal": { "tag": "Var", "fields": "B" }
+      },
+      "premises": []
+    },
+    {
+      "id": "n0",
+      "rule": "Cut",
+      "sequent": {
+        "ctx": [],
+        "goal": { "tag": "Var", "fields": "A" }
+      },
+      "premises": ["n1", "n2"]
+    }
+  ]
+}
