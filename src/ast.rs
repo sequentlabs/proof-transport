@@ -57,27 +57,45 @@ pub enum FormulaNode {
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub struct Sequent {
     pub ctx: Vec<Formula>,
-    /// We serialize as `thm`, but accept `goal` on input as well.
+    /// Canonical output field name is `thm`; we accept `goal` on input.
     pub thm: Formula,
 }
 
-/// Helper used only for deserialization: accept object, tuple, or shorthand.
+/// Accept three input encodings for a sequent:
+///   1) object form: { ctx?: [...]|formula, thm|goal: formula }
+///   2) tuple/array: [ ctx[..], thm ]
+///   3) shorthand:   "φ"   (means ctx = [])
 #[derive(Deserialize)]
 #[serde(untagged)]
 enum SequentDe {
-    // Full object: { ctx?: [...], thm }  (also accept "goal")
-    Full {
-        #[serde(default)]
-        ctx: Vec<Formula>,
-        #[serde(rename = "thm", alias = "goal")]
-        thm: Formula,
-    },
-    // Tuple/array form: [ ctx, thm ]
+    Full(FullDe),
     Tuple(SeqTuple),
-    // Shorthand: just a formula means ctx=[]
     Shorthand(Formula),
 }
 
+/// `ctx` may be either an array of formulas or a single formula.
+#[derive(Deserialize)]
+#[serde(untagged)]
+enum CtxDe {
+    Many(Vec<Formula>),
+    One(Formula),
+}
+
+#[derive(Deserialize)]
+struct FullDe {
+    #[serde(
+        default,
+        rename = "ctx",
+        alias = "context",
+        alias = "ants",
+        alias = "assumptions"
+    )]
+    ctx: Option<CtxDe>,
+    #[serde(rename = "thm", alias = "goal")]
+    thm: Formula,
+}
+
+/// Tuple/array form: [ ctx, thm ]
 #[derive(Deserialize)]
 struct SeqTuple(
     #[serde(default)] Vec<Formula>, // ctx (defaults to [])
@@ -87,9 +105,19 @@ struct SeqTuple(
 impl From<SequentDe> for Sequent {
     fn from(s: SequentDe) -> Self {
         match s {
-            SequentDe::Full { ctx, thm } => Sequent { ctx, thm },
+            SequentDe::Full(FullDe { ctx, thm }) => {
+                let ctx_vec = match ctx {
+                    None => Vec::new(),
+                    Some(CtxDe::Many(v)) => v,
+                    Some(CtxDe::One(f)) => vec![f],
+                };
+                Sequent { ctx: ctx_vec, thm }
+            }
             SequentDe::Tuple(SeqTuple(ctx, thm)) => Sequent { ctx, thm },
-            SequentDe::Shorthand(thm) => Sequent { ctx: Vec::new(), thm },
+            SequentDe::Shorthand(thm) => Sequent {
+                ctx: Vec::new(),
+                thm,
+            },
         }
     }
 }
@@ -102,7 +130,7 @@ impl<'de> Deserialize<'de> for Sequent {
 
 impl Serialize for Sequent {
     fn serialize<S: Serializer>(&self, s: S) -> Result<S::Ok, S::Error> {
-        // Keep the canonical/strict long form on output so the schema is stable.
+        // Always write the canonical long form so the schema is stable.
         #[derive(Serialize)]
         struct Full<'a> {
             ctx: &'a [Formula],
@@ -131,7 +159,8 @@ pub struct Proof {
 pub struct ProofNode {
     pub id: String,
     pub rule: String,
-    #[serde(default)]
+    #[serde(default, rename = "premises", alias = "prems")]
     pub premises: Vec<String>,
+    #[serde(rename = "sequent", alias = "seq")]
     pub sequent: Sequent,
 }
