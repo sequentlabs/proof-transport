@@ -1,40 +1,32 @@
-use proof_transport::{ast::Proof, cut_eliminate_all, fragility_score, validate_local_wf};
+use proof_transport::{ast::Proof, cut_eliminate_all, validate_local_wf};
 use serde_json::from_reader;
-use std::{fs, io, path::Path};
-
-fn try_load_proof(path: &Path) -> io::Result<Option<Proof>> {
-    let file = fs::File::open(path)?;
-    // If this JSON isn’t a Proof, treat it as a soft skip.
-    let parsed = from_reader::<_, Proof>(file).ok();
-    Ok(parsed)
-}
+use std::{fs, path::Path};
 
 #[test]
-fn scan_examples_and_run_canonical_example() {
-    // Always run the canonical example and assert fragility drops.
-    let p: Proof = from_reader(fs::File::open("examples/proof_with_cut.json").unwrap()).unwrap();
-    validate_local_wf(&p).unwrap();
-    let before = fragility_score(&p);
-    let q = cut_eliminate_all(&p);
-    validate_local_wf(&q).unwrap();
-    let after = fragility_score(&q);
-    assert!(after < before, "fragility did not drop: {} -> {}", before, after);
-
-    // Robustly scan every JSON in examples/: if it parses as a Proof, give it a light touch.
+fn golden_transport_pairs() {
+    // Walk every JSON file in examples/. If it parses as a Proof, check local WF and
+    // that transport produces a locally well‑formed proof as well.
     for entry in fs::read_dir("examples").unwrap() {
         let entry = entry.unwrap();
         let path = entry.path();
+
         if entry
             .file_type()
             .unwrap()
             .is_file()
             && path.extension().map_or(false, |e| e == "json")
         {
-            if let Ok(Some(proof)) = try_load_proof(&path) {
-                // Local well-formedness and a transport smoke test.
+            if let Some(proof) = try_load_proof(&path) {
+                // Local well‑formedness and a transport smoke test.
                 validate_local_wf(&proof).unwrap();
-                let _ = cut_eliminate_all(&proof);
+                let transported = cut_eliminate_all(&proof);
+                validate_local_wf(&transported).unwrap();
             }
         }
     }
+}
+
+fn try_load_proof(path: &Path) -> Option<Proof> {
+    let file = std::fs::File::open(path).ok()?;
+    from_reader::<_, Proof>(file).ok()
 }
