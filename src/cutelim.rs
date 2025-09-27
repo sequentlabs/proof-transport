@@ -6,6 +6,7 @@ pub fn cut_eliminate_root(p: &Proof) -> Proof {
     let mut q = p.clone();
 
     loop {
+        // find the root node
         let root_idx = q.nodes.iter().position(|n| n.id == q.root);
         if root_idx.is_none() {
             break;
@@ -16,9 +17,11 @@ pub fn cut_eliminate_root(p: &Proof) -> Proof {
             break;
         }
 
+        // Replace root with its first premise
         let new_root = q.nodes[root_idx].premises[0].clone();
         q.root = new_root;
 
+        // Remove the cut node
         let cut_id = q.nodes[root_idx].id.clone();
         q.nodes.retain(|n| n.id != cut_id);
 
@@ -28,7 +31,7 @@ pub fn cut_eliminate_root(p: &Proof) -> Proof {
     q
 }
 
-/// Eliminate all cuts by repeatedly applying eliminate_one_cut until no Cut remains.
+/// Eliminate all cuts by repeatedly applying `eliminate_one_cut` until no Cut remains.
 pub fn cut_eliminate_all(p: &Proof) -> Proof {
     let mut q = p.clone();
     loop {
@@ -41,7 +44,7 @@ pub fn cut_eliminate_all(p: &Proof) -> Proof {
 }
 
 /// Try to eliminate a single cut anywhere in the proof.
-/// Returns true if a cut was removed, false otherwise.
+/// Returns true if a cut was removed, false if none found.
 fn eliminate_one_cut(p: &mut Proof) -> bool {
     if let Some(cut_node) = p.nodes.iter().find(|n| n.rule == "Cut").cloned() {
         if cut_node.id == p.root && !cut_node.premises.is_empty() {
@@ -54,7 +57,7 @@ fn eliminate_one_cut(p: &mut Proof) -> bool {
     false
 }
 
-/// Keep only nodes reachable from the root
+/// Keep only nodes reachable from root.
 fn prune_reachable(p: &mut Proof) {
     let map: HashMap<String, ProofNode> =
         p.nodes.iter().cloned().map(|n| (n.id.clone(), n)).collect();
