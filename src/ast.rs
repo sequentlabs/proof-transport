@@ -1,49 +1,48 @@
-use serde::{Deserialize, Serialize};
+use serde::{de::Deserializer, Deserialize, Serialize};
 
-//
-// Terms
-//
+/// -------------------------
+/// Terms
+/// -------------------------
+
 #[derive(Debug, Clone, Serialize, PartialEq, Eq, Hash)]
-#[serde(tag = "tag", content = "fields")]
 pub enum Term {
     Var(String),
     Func { name: String, args: Vec<Term> },
 }
 
-// Helper shape for object-form Term deserialization
-#[derive(Deserialize)]
+#[derive(Debug, Deserialize)]
 #[serde(tag = "tag", content = "fields")]
-enum RawTerm {
+enum TermTagged {
     Var(String),
     Func { name: String, args: Vec<Term> },
 }
 
-// Accept either tagged-object or string (string -> Var)
-impl<'de> serde::Deserialize<'de> for Term {
-    fn deserialize<D>(de: D) -> Result<Self, D::Error>
-    where
-        D: serde::Deserializer<'de>,
-    {
-        #[derive(Deserialize)]
-        #[serde(untagged)]
-        enum Helper {
-            Str(String),
-            Obj(RawTerm),
-        }
+#[derive(Debug, Deserialize)]
+#[serde(untagged)]
+enum TermEither {
+    Tagged(TermTagged),
+    String(String),
+}
 
-        match Helper::deserialize(de)? {
-            Helper::Str(s) => Ok(Term::Var(s)),
-            Helper::Obj(RawTerm::Var(s)) => Ok(Term::Var(s)),
-            Helper::Obj(RawTerm::Func { name, args }) => Ok(Term::Func { name, args }),
+impl<'de> Deserialize<'de> for Term {
+    fn deserialize<D>(deserializer: D) -> Result<Self, D::Error>
+    where
+        D: Deserializer<'de>,
+    {
+        match TermEither::deserialize(deserializer)? {
+            TermEither::String(s) => Ok(Term::Var(s)),
+            TermEither::Tagged(TermTagged::Var(s)) => Ok(Term::Var(s)),
+            TermEither::Tagged(TermTagged::Func { name, args }) => Ok(Term::Func { name, args }),
         }
     }
 }
 
-//
-// Formulae
-//
+/// -------------------------
+/// Formulas
+/// -------------------------
+
 #[derive(Debug, Clone, Serialize, PartialEq, Eq, Hash)]
-#[serde(tag = "tag", content = "fields")]
+#[allow(clippy::large_enum_variant)]
 pub enum Formula {
     Var(String),
     Bot,
@@ -56,10 +55,9 @@ pub enum Formula {
     Exists(String, Box<Formula>),
 }
 
-// Helper shape for object-form Formula deserialization
-#[derive(Deserialize)]
+#[derive(Debug, Deserialize)]
 #[serde(tag = "tag", content = "fields")]
-enum RawFormula {
+enum FormulaTagged {
     Var(String),
     Bot,
     Top,
@@ -71,72 +69,83 @@ enum RawFormula {
     Exists(String, Box<Formula>),
 }
 
-// Accept either tagged-object or string (string -> Var)
-impl<'de> serde::Deserialize<'de> for Formula {
-    fn deserialize<D>(de: D) -> Result<Self, D::Error>
-    where
-        D: serde::Deserializer<'de>,
-    {
-        #[derive(Deserialize)]
-        #[serde(untagged)]
-        enum Helper {
-            Str(String),
-            Obj(RawFormula),
-        }
+#[derive(Debug, Deserialize)]
+#[serde(untagged)]
+enum FormulaEither {
+    Tagged(FormulaTagged),
+    String(String),
+}
 
-        Ok(match Helper::deserialize(de)? {
-            Helper::Str(s) => Formula::Var(s),
-            Helper::Obj(RawFormula::Var(s)) => Formula::Var(s),
-            Helper::Obj(RawFormula::Bot) => Formula::Bot,
-            Helper::Obj(RawFormula::Top) => Formula::Top,
-            Helper::Obj(RawFormula::Pred { name, args }) => Formula::Pred { name, args },
-            Helper::Obj(RawFormula::And(a, b)) => Formula::And(a, b),
-            Helper::Obj(RawFormula::Or(a, b)) => Formula::Or(a, b),
-            Helper::Obj(RawFormula::Imp(a, b)) => Formula::Imp(a, b),
-            Helper::Obj(RawFormula::Forall(x, f)) => Formula::Forall(x, f),
-            Helper::Obj(RawFormula::Exists(x, f)) => Formula::Exists(x, f),
-        })
+impl<'de> Deserialize<'de> for Formula {
+    fn deserialize<D>(deserializer: D) -> Result<Self, D::Error>
+    where
+        D: Deserializer<'de>,
+    {
+        match FormulaEither::deserialize(deserializer)? {
+            // Treat any bare string as a variable formula.
+            FormulaEither::String(s) => Ok(Formula::Var(s)),
+            FormulaEither::Tagged(FormulaTagged::Var(s)) => Ok(Formula::Var(s)),
+            FormulaEither::Tagged(FormulaTagged::Bot) => Ok(Formula::Bot),
+            FormulaEither::Tagged(FormulaTagged::Top) => Ok(Formula::Top),
+            FormulaEither::Tagged(FormulaTagged::Pred { name, args }) => {
+                Ok(Formula::Pred { name, args })
+            }
+            FormulaEither::Tagged(FormulaTagged::And(a, b)) => Ok(Formula::And(a, b)),
+            FormulaEither::Tagged(FormulaTagged::Or(a, b)) => Ok(Formula::Or(a, b)),
+            FormulaEither::Tagged(FormulaTagged::Imp(a, b)) => Ok(Formula::Imp(a, b)),
+            FormulaEither::Tagged(FormulaTagged::Forall(x, f)) => Ok(Formula::Forall(x, f)),
+            FormulaEither::Tagged(FormulaTagged::Exists(x, f)) => Ok(Formula::Exists(x, f)),
+        }
     }
 }
 
-//
-// Sequents
-//
+/// -------------------------
+/// Sequents
+/// -------------------------
+
 #[derive(Debug, Clone, Serialize, PartialEq, Eq)]
 pub struct Sequent {
+    /// If omitted in JSON, defaults to `[]`.
+    #[serde(default)]
     pub ctx: Vec<Formula>,
     pub goal: Formula,
 }
 
-// Accept either object-form { goal, ctx? } or string-form "phi" (treated as goal; ctx := [])
-impl<'de> serde::Deserialize<'de> for Sequent {
-    fn deserialize<D>(de: D) -> Result<Self, D::Error>
-    where
-        D: serde::Deserializer<'de>,
-    {
-        #[derive(Deserialize)]
-        #[serde(untagged)]
-        enum Helper {
-            // object form; ctx optional -> defaults to []
-            Obj {
-                #[serde(default)]
-                ctx: Vec<Formula>,
-                goal: Formula,
-            },
-            // string form; interpret as goal; ctx := []
-            Str(String),
-        }
+#[derive(Debug, Deserialize)]
+#[serde(untagged)]
+enum SequentEither {
+    // Normal object form
+    Obj {
+        #[serde(default)]
+        ctx: Vec<Formula>,
+        goal: Formula,
+    },
+    // A single formula means: ctx = [], goal = <that formula>
+    OnlyFormula(Formula),
+    // And for extra permissiveness: a bare string equals Var(string)
+    OnlyString(String),
+}
 
-        match Helper::deserialize(de)? {
-            Helper::Obj { ctx, goal } => Ok(Sequent { ctx, goal }),
-            Helper::Str(s) => Ok(Sequent { ctx: Vec::new(), goal: Formula::Var(s) }),
+impl<'de> Deserialize<'de> for Sequent {
+    fn deserialize<D>(deserializer: D) -> Result<Self, D::Error>
+    where
+        D: Deserializer<'de>,
+    {
+        match SequentEither::deserialize(deserializer)? {
+            SequentEither::Obj { ctx, goal } => Ok(Sequent { ctx, goal }),
+            SequentEither::OnlyFormula(goal) => Ok(Sequent { ctx: vec![], goal }),
+            SequentEither::OnlyString(s) => Ok(Sequent {
+                ctx: vec![],
+                goal: Formula::Var(s),
+            }),
         }
     }
 }
 
-//
-// Proofs
-//
+/// -------------------------
+/// Proofs
+/// -------------------------
+
 #[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Eq)]
 pub struct Proof {
     pub nodes: Vec<ProofNode>,
@@ -147,6 +156,7 @@ pub struct Proof {
 pub struct ProofNode {
     pub id: String,
     pub rule: String,
+    /// If omitted, defaults to an empty list.
     #[serde(default)]
     pub premises: Vec<String>,
     pub sequent: Sequent,
