@@ -4,6 +4,7 @@ use std::fs::File;
 
 #[test]
 fn golden_example_runs() {
+    // Load the canonical example that contains a Cut at the root.
     let p: Proof = from_reader(File::open("examples/proof_with_cut.json").unwrap()).unwrap();
     validate_local_wf(&p).unwrap();
 
