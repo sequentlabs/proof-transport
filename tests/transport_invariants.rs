@@ -1,5 +1,11 @@
-use std::fs::File;
-use serde_json::from_reader;
+// tests/transport_invariants.rs
+
+// Use the shared tolerant JSON loader (strips comments, trailing commas).
+#[path = "support.rs"]
+mod support;
+use support::parse_proof;
+
+use std::path::Path;
 
 use proof_transport::{
     ast::Proof,
@@ -9,7 +15,8 @@ use proof_transport::{
 };
 
 fn load(path: &str) -> Proof {
-    from_reader(File::open(path).expect("open JSON")).expect("parse proof")
+    // Tolerant loader: tries strict JSON first, then sanitizes and retries.
+    parse_proof(Path::new(path)).expect("parse proof")
 }
 
 /// On these inputs we intentionally have a `Cut` at/near the root,
