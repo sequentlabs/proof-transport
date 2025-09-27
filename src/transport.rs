@@ -8,11 +8,11 @@ use crate::{
     validator::validate_local_wf,
 };
 
-/// Transport a proof between registry times.
-/// Phase‑1 behavior:
-/// - validate input
-/// - if target time disables Cut, eliminate all cuts
-/// - validate output
+/// Transport a proof between registry times (Phase‑1).
+/// Steps:
+/// 1) validate input
+/// 2) if target time disables `Cut`, eliminate all cuts
+/// 3) validate output
 pub fn transport(proof: &Proof, reg: &Registry, _from: u64, to: u64) -> Result<Proof> {
     // Clone to avoid mutating input
     let mut p = proof.clone();
@@ -20,10 +20,7 @@ pub fn transport(proof: &Proof, reg: &Registry, _from: u64, to: u64) -> Result<P
     // 1) Validate starting proof
     validate_local_wf(&p)?;
 
-    // Explicitly “use” `_from` as a no‑op to keep the lint quiet regardless of flags
-    let _ = _from;
-
-    // 2) Apply registry-aware transform: if Cut disabled at target => eliminate cuts
+    // 2) Apply registry-aware transform: if `Cut` disabled at target => eliminate cuts
     let enabled_to = reg.enabled_at(to);
     if !enabled_to.contains(&RuleId::Cut) {
         p = cut_eliminate_all(&p);
@@ -35,7 +32,7 @@ pub fn transport(proof: &Proof, reg: &Registry, _from: u64, to: u64) -> Result<P
     Ok(p)
 }
 
-/// Convenience helper for tests/metrics
+/// Convenience helper for tests/metrics: fragility delta across a transport.
 pub fn fragility_delta(proof: &Proof, reg: &Registry, from: u64, to: u64) -> Result<i64> {
     let before = fragility_score(proof) as i64;
     let after_proof = transport(proof, reg, from, to)?;
