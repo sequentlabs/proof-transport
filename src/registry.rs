@@ -1,43 +1,72 @@
-//! Registry: rule enablement over (logical) time.
+use std::collections::HashSet;
 
-#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+/// Identifier for inference rules used across the crate (validator, transport, tests).
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
 pub enum RuleId {
     Id,
-    BotI,
+    BotT,
     AndR,
-    AndL,
+    AndL1,
+    AndL2,
     OrR1,
     OrR2,
-    OrL1,
-    OrL2,
-    ImpR, // ← standard names
-    ImpL, // ← standard names
+    OrL,
+    ImpR,
+    ImpL,
     Cut,
 }
 
-/// A time slice declares which rules are enabled starting at logical time `t`.
-#[derive(Debug, Clone, PartialEq, Eq, Default)]
+/// A snapshot of which rules are enabled at logical time `t`.
+/// Tests construct this with a struct literal, so keep the field names/public-ness.
+#[derive(Debug, Clone)]
 pub struct TimeSlice {
     pub t: u64,
     pub enabled_rules: Vec<RuleId>,
 }
 
-/// A registry is an ordered list of time slices.
-/// The last slice with `t <= query_time` determines the set of enabled rules.
-#[derive(Debug, Clone, PartialEq, Eq, Default)]
+/// Registry of rule enablement over (logical) time.
+/// Tests construct this with a struct literal, so keep `times` public.
+#[derive(Debug, Clone)]
 pub struct Registry {
     pub times: Vec<TimeSlice>,
 }
 
 impl Registry {
-    /// Return the enabled rules at logical time `t`.
-    /// If there is no slice with `t_i <= t`, return an empty set.
-    pub fn enabled_at(&self, t: u64) -> Vec<RuleId> {
+    /// Convenience constructor.
+    pub fn new(times: Vec<TimeSlice>) -> Self {
+        Self { times }
+    }
+
+    /// Set of rules enabled at logical time `t`.
+    ///
+    /// Contract expected by tests and transport:
+    /// - Find the most recent `TimeSlice` with `ts.t <= t`.
+    /// - If none exist, return empty set.
+    /// - The slice’s `enabled_rules` is interpreted as the full set at that time.
+    pub fn enabled_at(&self, t: u64) -> HashSet<RuleId> {
         self.times
             .iter()
-            .take_while(|ts| ts.t <= t)
-            .last()
-            .map(|ts| ts.enabled_rules.clone())
-            .unwrap_or_default()
+            .rev()
+            .find(|ts| ts.t <= t)
+            .map(|ts| ts.enabled_rules.iter().copied().collect())
+            .unwrap_or_else(HashSet::new)
+    }
+}
+
+impl Default for Registry {
+    /// Sensible default used by unit/golden tests:
+    /// - At `t = 0`: all rules (including `Cut`) are enabled
+    /// - At `t = 1`: everything except `Cut` (so transports to `t >= 1` will cut-eliminate)
+    fn default() -> Self {
+        use RuleId::*;
+        let all = vec![Id, BotT, AndR, AndL1, AndL2, OrR1, OrR2, OrL, ImpR, ImpL, Cut];
+        let no_cut = vec![Id, BotT, AndR, AndL1, AndL2, OrR1, OrR2, OrL, ImpR, ImpL];
+
+        Self {
+            times: vec![
+                TimeSlice { t: 0, enabled_rules: all },
+                TimeSlice { t: 1, enabled_rules: no_cut },
+            ],
+        }
     }
 }
