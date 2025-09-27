@@ -1,22 +1,25 @@
 use std::collections::HashSet;
 
-/// All inference rules that the validator/transport refer to.
-/// Keep this list in sync with the places that do structural checks.
+/// All inference rules that the validator/transport may refer to.
+/// (Phase 1: we keep the list broad; it’s OK if not all are used yet.)
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
 pub enum RuleId {
     Axiom,
-    Cut,
-    // disjunction
-    OrL,
+    Id,
+    BotL,
+    AndR,
+    AndL1,
+    AndL2,
     OrR1,
     OrR2,
-    // implication
-    ImpL,
+    OrL,
     ImpR,
+    ImpL,
+    Cut,
 }
 
-/// Minimal registry: a set of rules that are enabled at all logical times.
-/// (Phase 1 only needs a flat set; we can evolve this to per-time policies in Phase 2.)
+/// Minimal registry for Phase 1: a flat set of enabled rules.
+/// We can evolve this in Phase 2 to time‑varying policies, provenance, etc.
 #[derive(Debug, Clone)]
 pub struct Registry {
     enabled: HashSet<RuleId>,
@@ -26,24 +29,29 @@ impl Default for Registry {
     fn default() -> Self {
         let mut set = HashSet::new();
         set.insert(RuleId::Axiom);
-        set.insert(RuleId::Cut);
-        set.insert(RuleId::OrL);
+        set.insert(RuleId::Id);
+        set.insert(RuleId::BotL);
+        set.insert(RuleId::AndR);
+        set.insert(RuleId::AndL1);
+        set.insert(RuleId::AndL2);
         set.insert(RuleId::OrR1);
         set.insert(RuleId::OrR2);
-        set.insert(RuleId::ImpL);
+        set.insert(RuleId::OrL);
         set.insert(RuleId::ImpR);
+        set.insert(RuleId::ImpL);
+        set.insert(RuleId::Cut);
         Self { enabled: set }
     }
 }
 
 impl Registry {
-    /// Return the set of rules enabled at logical time `t`.
+    /// Rules enabled at logical time `t`.
     /// Phase 1: same set for all `t`.
     pub fn enabled_at(&self, _t: u64) -> HashSet<RuleId> {
         self.enabled.clone()
     }
 
-    /// Convenience helpers (not strictly required by Phase 1)
+    /// Convenience helpers (optional, useful in tests or future code).
     pub fn enables(&self, r: RuleId) -> bool {
         self.enabled.contains(&r)
     }
@@ -54,4 +62,3 @@ impl Registry {
         self.enabled.remove(&r);
     }
 }
-
