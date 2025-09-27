@@ -24,9 +24,9 @@ fn load(path: &str) -> Proof {
 #[test]
 fn fragility_strictly_drops_on_cut_examples() {
     let paths = [
-        "examples/proof_with_cut.json",      // existing root Cut
-        "examples/proof_cut_chain.json",     // nested/internal Cut
-        "examples/proof_cut_pair.json",      // sibling Cuts
+        "examples/proof_with_cut.json", // existing root Cut
+        "examples/proof_cut_chain.json", // nested/internal Cut
+        "examples/proof_cut_pair.json",  // sibling Cuts
     ];
 
     for path in paths {
@@ -76,7 +76,7 @@ fn fragility_never_increases_on_all_examples() {
 }
 
 /// Explicitly assert that pruning removes unreachable nodes on the
-/// `ghost` example we added to exercises graph cleanup.
+/// `ghost` example we added to exercise graph cleanup.
 #[test]
 fn unreachable_nodes_are_pruned() {
     let p = load("examples/proof_with_unreachable.json");
