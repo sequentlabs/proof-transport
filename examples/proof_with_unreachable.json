@@ -1,0 +1,31 @@
+{
+  "root": "c_main",
+  "nodes": [
+    {
+      "id": "c_main",
+      "rule": "Cut",
+      "premises": ["a_left", "a_right"],
+      "sequent": { "left": ["p"], "right": ["p"] }
+    },
+    {
+      "id": "a_left",
+      "rule": "Axiom",
+      "premises": [],
+      "sequent": { "left": ["p"], "right": ["p"] }
+    },
+    {
+      "id": "a_right",
+      "rule": "Axiom",
+      "premises": [],
+      "sequent": { "left": ["q"], "right": ["q"] }
+    },
+
+    // Unreachable node (not referenced from root)
+    {
+      "id": "ghost",
+      "rule": "Axiom",
+      "premises": [],
+      "sequent": { "left": ["z"], "right": ["z"] }
+    }
+  ]
+}
