@@ -36,8 +36,36 @@ Automatically transport sequent proofs across rule-set updates (e.g., remove `Cu
 
 ## ⚡ Quickstart
 
-    cargo build --release
-    ./target/release/tesl version
+```bash
+# Build, lint, test
+cargo fmt --all
+cargo clippy -- -D warnings
+cargo test
+
+# (optional) Generate docs
+cargo doc --no-deps --open
+
+### Library API (new section)
+```md
+## 📦 Library API (MVP)
+
+Transport a proof across a registry change and compute fragility deltas.
+
+### Tests & Goldens (tighten wording)
+```md
+
+## ✅ Tests & Goldens
+
+## 🗺️ Status
+
+- Phase‑1 (Propositional MVP): ~80%  
+  ✓ Registry‑aware transport driver  
+  ✓ Fragility metric + delta  
+  ✓ Golden example + harness  
+  ☐ More goldens (3–5)  
+  ☐ Registry unit tests  
+  ☐ Rustdoc polish
+
 
 ---
 
