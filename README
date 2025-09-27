@@ -20,24 +20,6 @@ Automatically transport sequent proofs across rule-set updates (e.g., remove `Cu
 
 ## Usage
 
-### Library
-```rust
-use proof_transport::{
-  ast::Proof,
-  registry::Registry,
-  transport::transport,
-  frag::fragility_score,
-};
-
-fn example(p: &Proof, reg: &Registry) -> anyhow::Result<()> {
-  // Move `p` from time 0 to time 1. If `Cut` is disabled at `to`,
-  // transport will eliminate cuts.
-  let q = transport(p, reg, 0, 1)?;
-  assert!(fragility_score(&q) <= fragility_score(p));
-  Ok(())
-}
-
-
 ---
 
 ## ✅ What CI checks
@@ -68,6 +50,9 @@ cargo doc --no-deps --open
 ### Library API (new section)
 ```md
 ## 📦 Library API (MVP)
+
+### Library
+```rust
 
 Transport a proof across a registry change and compute fragility deltas.
 
