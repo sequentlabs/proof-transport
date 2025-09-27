@@ -20,6 +20,9 @@ pub fn transport(proof: &Proof, reg: &Registry, _from: u64, to: u64) -> Result<P
     // 1) Validate starting proof
     validate_local_wf(&p)?;
 
+    // Explicitly “use” `_from` as a no‑op to keep the lint quiet regardless of flags
+    let _ = _from;
+
     // 2) Apply registry-aware transform: if Cut disabled at target => eliminate cuts
     let enabled_to = reg.enabled_at(to);
     if !enabled_to.contains(&RuleId::Cut) {
