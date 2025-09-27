@@ -1,7 +1,7 @@
 use crate::ast::{Proof, ProofNode};
 use std::collections::{HashMap, HashSet};
 
-/// Eliminate all cuts by repeatedly applying cut_eliminate_root until no Cut remains.
+/// Eliminate all cuts by repeatedly applying eliminate_one_cut until no Cut remains.
 pub fn cut_eliminate_all(p: &Proof) -> Proof {
     let mut q = p.clone();
 
@@ -17,20 +17,22 @@ pub fn cut_eliminate_all(p: &Proof) -> Proof {
 /// Try to eliminate a single cut anywhere in the proof.
 /// Returns true if a cut was removed, false if none found.
 fn eliminate_one_cut(p: &mut Proof) -> bool {
-    // Map for quick node lookup
-    let map: HashMap<String, ProofNode> =
-        p.nodes.iter().cloned().map(|n| (n.id.clone(), n)).collect();
+    // Clone nodes for searching to avoid borrow conflicts
+    let snapshot: Vec<ProofNode> = p.nodes.clone();
 
-    // Find any Cut node
-    if let Some(cut_node) = p.nodes.iter().find(|n| n.rule == "Cut") {
-        // Replace root if the cut is root
+    // Find any Cut node in the snapshot
+    if let Some(cut_node) = snapshot.iter().find(|n| n.rule == "Cut") {
+        // Replace root if the cut is the root
         if cut_node.id == p.root && !cut_node.premises.is_empty() {
             p.root = cut_node.premises[0].clone();
         }
-        // Remove this cut node from list
+
+        // Remove the cut node from the actual list
         p.nodes.retain(|n| n.id != cut_node.id);
+
         // Prune unreachable nodes
         prune_reachable(p);
+
         return true;
     }
     false
@@ -56,4 +58,3 @@ fn prune_reachable(p: &mut Proof) {
 
     p.nodes.retain(|n| keep.contains(&n.id));
 }
-
