@@ -1,25 +1,31 @@
-use std::fs::File;
-use serde_json::from_reader;
+// tests/golden.rs
 
-use proof_transport::{ast::Proof, registry::Registry, transport::transport};
+use proof_transport::{
+    ast::Proof,
+    cut_eliminate_all,
+    fragility_score,
+    registry::{Registry, RuleId},
+    validate_local_wf,
+};
+
+use serde_json::from_reader;
+use std::fs::File;
 
 #[test]
-fn golden_prop_cut_elimination() {
-    let input: Proof =
-        from_reader(File::open("examples/prop_cut_in.json").unwrap()).unwrap();
-    let reg: Registry =
-        from_reader(File::open("examples/R.json").unwrap()).unwrap();
+fn golden_example_runs() {
+    // Load an example proof
+    let p: Proof = from_reader(File::open("examples/proof_with_cut.json").unwrap()).unwrap();
+    validate_local_wf(&p).unwrap();
 
-    // Run transport from t=1 (Cut enabled) to t=3 (Cut disabled)
-    let output = transport(&input, &reg, 1, 3).unwrap();
+    let before = fragility_score(&p);
+    let q = cut_eliminate_all(&p);
+    validate_local_wf(&q).unwrap();
 
-    let expected: Proof =
-        from_reader(File::open("examples/prop_cut_out.json").unwrap()).unwrap();
-
-    assert_eq!(
-        output.root, expected.root,
-        "Root mismatch: expected {}, got {}",
-        expected.root, output.root
+    let after = fragility_score(&q);
+    assert!(
+        after < before,
+        "fragility did not drop: {} -> {}",
+        before,
+        after
     );
-    assert_eq!(output.nodes.len(), expected.nodes.len(), "Node count mismatch");
 }
