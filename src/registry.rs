@@ -17,20 +17,17 @@ pub enum RuleId {
     Cut,
 }
 
-/// A point‑in‑time rule configuration used by tests:
+/// A point-in-time rule configuration used by tests:
 /// TimeSlice { t, enabled_rules }
 #[derive(Debug, Clone)]
 pub struct TimeSlice {
     pub t: u64,
-    pub enabled_rules: Vec<RuleId>,
+    pub enabled_rules: HashSet<RuleId>,
 }
 
 impl Default for TimeSlice {
     fn default() -> Self {
-        Self {
-            t: 0,
-            enabled_rules: Vec::new(),
-        }
+        Self { t: 0, enabled_rules: HashSet::new() }
     }
 }
 
@@ -45,15 +42,14 @@ impl Registry {
     /// Return the set of rules enabled at logical time `t`.
     /// Semantics: last slice with `slice.t <= t` wins.
     pub fn enabled_at(&self, t: u64) -> HashSet<RuleId> {
-        // Walk slices in order; remember the last one <= t
-        let mut current: &[RuleId] = &[];
+        let mut current = HashSet::new();
         for slice in &self.times {
             if slice.t <= t {
-                current = &slice.enabled_rules;
+                current = slice.enabled_rules.clone();
             } else {
                 break;
             }
         }
-        current.iter().copied().collect()
+        current
     }
 }
