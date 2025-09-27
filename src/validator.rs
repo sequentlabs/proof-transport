@@ -6,26 +6,25 @@ use crate::{
 };
 
 /// Map rule strings (as they appear in JSON/examples) to RuleId.
-/// Accept both canonical and legacy aliases used by the examples.
+/// Names/case match tests exactly.
 fn rule_from_str(s: &str) -> Option<RuleId> {
     Some(match s {
-        "Id" => Id,
+        "Id"   => Id,
         "BotI" => BotI,
         "AndR" => AndR,
         "AndL1" => AndL1,
         "AndL2" => AndL2,
         "OrL" => OrL,
-        // Accept legacy OrR1/OrR2 names in examples; normalize to Or1/Or2.
-        "Or1" | "OrR1" => Or1,
-        "Or2" | "OrR2" => Or2,
+        "Or1" => Or1,
+        "Or2" => Or2,
         "ImpL" => ImpL,
         "ImpR" => ImpR,
-        "Cut" => Cut,
+        "Cut"  => Cut,
         _ => return None,
     })
 }
 
-/// Minimal local well‑formedness:
+/// Minimal local well-formedness:
 /// - root id exists
 /// - each rule name is known
 /// - each premise id exists
