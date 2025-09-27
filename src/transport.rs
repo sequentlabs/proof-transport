@@ -9,28 +9,23 @@ use crate::{
 };
 
 /// Transport a proof between registry times.
-///
 /// Phase‑1 behavior:
 /// - validate input
 /// - if target time disables Cut, eliminate all cuts
 /// - validate output
 ///
-/// NOTE: We keep the `from` parameter in the public API for forward
-/// compatibility, but it is not used in Phase‑1. To satisfy `-D warnings`,
-/// we both allow unused variables for this function *and* touch `from`.
+/// NOTE:
+/// We keep the `_from` parameter in the API for future use. The function
+/// explicitly allows the unused parameter to satisfy `-D warnings` in CI.
 #[allow(unused_variables)]
-pub fn transport(proof: &Proof, reg: &Registry, from: u64, to: u64) -> Result<Proof> {
-    // Touch `from` so it is considered "used" even under clippy `-D warnings`.
-    // (It's `Copy`, so this is a no-op.)
-    let _ = from;
-
+pub fn transport(proof: &Proof, reg: &Registry, _from: u64, to: u64) -> Result<Proof> {
     // Clone to avoid mutating input
     let mut p = proof.clone();
 
     // 1) Validate starting proof
     validate_local_wf(&p)?;
 
-    // 2) Apply registry-aware transform: if Cut disabled at target => eliminate cuts
+    // 2) If Cut is disabled at the target time, eliminate all cuts
     let enabled_to = reg.enabled_at(to);
     if !enabled_to.contains(&RuleId::Cut) {
         p = cut_eliminate_all(&p);
