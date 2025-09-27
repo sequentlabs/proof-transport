@@ -1,3 +1,4 @@
+// src/transport.rs
 use anyhow::Result;
 
 use crate::{
@@ -11,13 +12,12 @@ use crate::{
 /// Transport a proof between registry times.
 ///
 /// Phase‑1 behavior:
-/// - validate input
-/// - if target time disables Cut, eliminate all cuts
-/// - validate output
-pub fn transport(proof: &Proof, reg: &Registry, from: u64, to: u64) -> Result<Proof> {
-    // Touch `from` so -D warnings are satisfied while keeping the public API.
+/// 1) validate input
+/// 2) if target time disables Cut, eliminate all cuts
+/// 3) validate output
+pub fn transport(proof: &Proof, reg: &Registry, _from: u64, to: u64) -> Result<Proof> {
     // (Phase‑1 semantics do not depend on `from`.)
-    let _ = reg.enabled_at(from);
+    let enabled_to = reg.enabled_at(to);
 
     // Clone to avoid mutating input
     let mut p = proof.clone();
@@ -25,8 +25,7 @@ pub fn transport(proof: &Proof, reg: &Registry, from: u64, to: u64) -> Result<Pr
     // 1) Validate starting proof
     validate_local_wf(&p)?;
 
-    // 2) Apply registry-aware transform: if Cut disabled at target => eliminate cuts
-    let enabled_to = reg.enabled_at(to);
+    // 2) Apply registry‑aware transform: if Cut disabled at target => eliminate cuts
     if !enabled_to.contains(&RuleId::Cut) {
         p = cut_eliminate_all(&p);
     }
