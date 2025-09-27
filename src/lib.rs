@@ -6,7 +6,7 @@ pub mod frag;
 pub mod registry;
 pub mod validator;
 
-// Re-export key types and functions so downstream crates & tests can use directly
+// Re-export key types and functions so downstream crates & tests can use directly.
 pub use ast::*;
 pub use cutelim::{cut_eliminate_all, cut_eliminate_root};
 pub use frag::fragility_score;
