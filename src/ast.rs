@@ -1,6 +1,9 @@
+// src/ast.rs
 use serde::{Deserialize, Deserializer, Serialize, Serializer};
 
-/// --- Terms -----------------------------------------------------------------
+/// ============================
+/// Terms
+/// ============================
 
 /// Accept either the structured `{ tag, fields }` or a permissive string form.
 #[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Eq, Hash)]
@@ -19,7 +22,9 @@ pub enum TermNode {
     Func { name: String, args: Vec<Term> },
 }
 
-/// --- Formulas ---------------------------------------------------------------
+/// ============================
+/// Formulas
+/// ============================
 
 /// Accept either the structured `{ tag, fields }` or a permissive string form.
 #[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Eq, Hash)]
@@ -45,7 +50,9 @@ pub enum FormulaNode {
     Exists(String, Box<Formula>),
 }
 
-/// --- Sequents ---------------------------------------------------------------
+/// ============================
+/// Sequents
+/// ============================
 
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub struct Sequent {
@@ -54,25 +61,34 @@ pub struct Sequent {
     pub thm: Formula,
 }
 
-/// Helper used only for deserialization: either full object or shorthand.
+/// Helper used only for deserialization: accept object, tuple, or shorthand.
 #[derive(Deserialize)]
 #[serde(untagged)]
 enum SequentDe {
-    // Full: { ctx?, thm }  (ctx defaults to [])
+    // Full object: { ctx?: [...], thm }  (also accept "goal")
     Full {
         #[serde(default)]
         ctx: Vec<Formula>,
         #[serde(rename = "thm", alias = "goal")]
         thm: Formula,
     },
-    // Shorthand: just a formula like "(A ⇒ A)" meaning ctx=[]
+    // Tuple/array form: [ ctx, thm ]
+    Tuple(SeqTuple),
+    // Shorthand: just a formula means ctx=[]
     Shorthand(Formula),
 }
+
+#[derive(Deserialize)]
+struct SeqTuple(
+    #[serde(default)] Vec<Formula>, // ctx (defaults to [])
+    Formula,                        // thm
+);
 
 impl From<SequentDe> for Sequent {
     fn from(s: SequentDe) -> Self {
         match s {
             SequentDe::Full { ctx, thm } => Sequent { ctx, thm },
+            SequentDe::Tuple(SeqTuple(ctx, thm)) => Sequent { ctx, thm },
             SequentDe::Shorthand(thm) => Sequent { ctx: Vec::new(), thm },
         }
     }
@@ -86,17 +102,24 @@ impl<'de> Deserialize<'de> for Sequent {
 
 impl Serialize for Sequent {
     fn serialize<S: Serializer>(&self, s: S) -> Result<S::Ok, S::Error> {
+        // Keep the canonical/strict long form on output so the schema is stable.
         #[derive(Serialize)]
         struct Full<'a> {
             ctx: &'a [Formula],
             #[serde(rename = "thm")]
             thm: &'a Formula,
         }
-        Full { ctx: &self.ctx, thm: &self.thm }.serialize(s)
+        Full {
+            ctx: &self.ctx,
+            thm: &self.thm,
+        }
+        .serialize(s)
     }
 }
 
-/// --- Proofs -----------------------------------------------------------------
+/// ============================
+/// Proofs
+/// ============================
 
 #[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Eq)]
 pub struct Proof {
