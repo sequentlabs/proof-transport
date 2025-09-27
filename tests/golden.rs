@@ -3,6 +3,7 @@
 use proof_transport::{
     ast::Proof,
     cut_eliminate_all,
+    cut_eliminate_root,
     fragility_score,
     registry::{Registry, RuleId},
     validate_local_wf,
@@ -18,14 +19,28 @@ fn golden_example_runs() {
     validate_local_wf(&p).unwrap();
 
     let before = fragility_score(&p);
+
+    // Run both cut eliminators to ensure they’re consistent
     let q = cut_eliminate_all(&p);
+    let q_root = cut_eliminate_root(&p);
+
     validate_local_wf(&q).unwrap();
+    validate_local_wf(&q_root).unwrap();
 
     let after = fragility_score(&q);
+    let after_root = fragility_score(&q_root);
+
     assert!(
         after < before,
-        "fragility did not drop: {} -> {}",
+        "fragility did not drop (cut_eliminate_all): {} -> {}",
         before,
         after
+    );
+
+    assert!(
+        after_root < before,
+        "fragility did not drop (cut_eliminate_root): {} -> {}",
+        before,
+        after_root
     );
 }
