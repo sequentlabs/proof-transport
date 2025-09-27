@@ -16,6 +16,9 @@ use crate::{
 /// 2) if target time disables Cut, eliminate all cuts
 /// 3) validate output
 pub fn transport(proof: &Proof, reg: &Registry, _from: u64, to: u64) -> Result<Proof> {
+    // Explicitly "use" the param so even aggressive lints remain quiet.
+    let _ = _from;
+
     // (Phase‑1 semantics do not depend on `from`.)
     let enabled_to = reg.enabled_at(to);
 
