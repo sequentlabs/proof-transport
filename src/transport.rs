@@ -1,4 +1,3 @@
-// src/transport.rs
 use anyhow::Result;
 
 use crate::{
@@ -10,33 +9,29 @@ use crate::{
 };
 
 /// Transport a proof from one registry time `from` to another `to`.
-/// - Always validates before and after.
-/// - If the target time disables `Cut`, all cuts are eliminated.
-/// - Returns the transformed proof.
+/// If the target disables `Cut`, all cuts are eliminated.
+/// Returns the transformed proof.
 ///
-/// Note: `_from` is currently unused but kept for API stability; we may
-/// later add behaviors that depend on the source registry time.
+/// NOTE: `_from` is currently unused (kept for future diff/compat logic).
 pub fn transport(proof: &Proof, reg: &Registry, _from: u64, to: u64) -> Result<Proof> {
-    // Work on a clone to avoid mutating the input
+    // Clone to avoid mutating input
     let mut p = proof.clone();
 
-    // Validate the starting proof
+    // Always validate the starting proof
     validate_local_wf(&p)?;
 
-    // If Cut is disabled at the target, eliminate all cuts
+    // If Cut is disabled at target time, eliminate cuts
     let enabled_to = reg.enabled_at(to);
     if !enabled_to.contains(&RuleId::Cut) {
         p = cut_eliminate_all(&p);
     }
 
-    // Validate after transport
+    // Re-validate after transport
     validate_local_wf(&p)?;
     Ok(p)
 }
 
-/// Compute the fragility delta when transporting a proof across registry evolution.
-///
-/// Returns: after_fragility - before_fragility (strictly negative if we removed `Cut`).
+/// Compute fragility delta across registry evolution.
 pub fn fragility_delta(proof: &Proof, reg: &Registry, from: u64, to: u64) -> Result<i64> {
     let before = fragility_score(proof) as i64;
     let after_proof = transport(proof, reg, from, to)?;
