@@ -1,12 +1,10 @@
 use std::collections::HashSet;
 
-/// All inference rules that the validator/transport may refer to.
-/// (Phase 1: we keep the list broad; it’s OK if not all are used yet.)
+/// All inference rules our transport cares about.
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
 pub enum RuleId {
-    Axiom,
     Id,
-    BotL,
+    BotI,
     AndR,
     AndL1,
     AndL2,
@@ -18,47 +16,42 @@ pub enum RuleId {
     Cut,
 }
 
-/// Minimal registry for Phase 1: a flat set of enabled rules.
-/// We can evolve this in Phase 2 to time‑varying policies, provenance, etc.
-#[derive(Debug, Clone)]
-pub struct Registry {
-    enabled: HashSet<RuleId>,
+/// Logical time (Phase‑1 keeps this as a simple counter).
+pub type Time = u64;
+
+/// A change point in the rule‑enablement timeline.
+/// At logical time `at`, the set of enabled rules becomes `enabled`.
+#[derive(Debug, Clone, PartialEq, Eq)]
+pub struct TimeSlice {
+    pub at: Time,
+    pub enabled: Vec<RuleId>,
 }
 
-impl Default for Registry {
-    fn default() -> Self {
-        let mut set = HashSet::new();
-        set.insert(RuleId::Axiom);
-        set.insert(RuleId::Id);
-        set.insert(RuleId::BotL);
-        set.insert(RuleId::AndR);
-        set.insert(RuleId::AndL1);
-        set.insert(RuleId::AndL2);
-        set.insert(RuleId::OrR1);
-        set.insert(RuleId::OrR2);
-        set.insert(RuleId::OrL);
-        set.insert(RuleId::ImpR);
-        set.insert(RuleId::ImpL);
-        set.insert(RuleId::Cut);
-        Self { enabled: set }
-    }
+/// Rule‑enablement registry over logical time.
+/// Tests construct this with a struct literal, so `times` must be public.
+#[derive(Debug, Clone, Default)]
+pub struct Registry {
+    pub times: Vec<TimeSlice>,
 }
 
 impl Registry {
-    /// Rules enabled at logical time `t`.
-    /// Phase 1: same set for all `t`.
-    pub fn enabled_at(&self, _t: u64) -> HashSet<RuleId> {
-        self.enabled.clone()
-    }
+    /// Return the set of rules enabled at logical time `t`.
+    /// If no slice exists at or before `t`, returns the empty set.
+    pub fn enabled_at(&self, t: Time) -> HashSet<RuleId> {
+        // Find the latest slice whose `at` <= t
+        let mut latest: Option<&TimeSlice> = None;
+        for ts in &self.times {
+            if ts.at <= t {
+                match latest {
+                    Some(best) if best.at >= ts.at => {} // keep best
+                    _ => latest = Some(ts),
+                }
+            }
+        }
 
-    /// Convenience helpers (optional, useful in tests or future code).
-    pub fn enables(&self, r: RuleId) -> bool {
-        self.enabled.contains(&r)
-    }
-    pub fn enable(&mut self, r: RuleId) {
-        self.enabled.insert(r);
-    }
-    pub fn disable(&mut self, r: RuleId) {
-        self.enabled.remove(&r);
+        match latest {
+            Some(ts) => ts.enabled.iter().copied().collect(),
+            None => HashSet::new(),
+        }
     }
 }
