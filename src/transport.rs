@@ -9,7 +9,7 @@ use crate::{
 };
 
 /// Transport a proof between registry times.
-/// Phase-1 behavior:
+/// Phase‑1 behavior:
 /// - validate input
 /// - if target time disables Cut, eliminate all cuts
 /// - validate output
@@ -33,9 +33,9 @@ pub fn transport(proof: &Proof, reg: &Registry, _from: u64, to: u64) -> Result<P
 }
 
 /// Convenience helper for tests/metrics
-pub fn fragility_delta(proof: &Proof, reg: &Registry, from: u64, to: u64) -> Result<i64> {
+pub fn fragility_delta(proof: &Proof, reg: &Registry, _from: u64, to: u64) -> Result<i64> {
     let before = fragility_score(proof) as i64;
-    let after_proof = transport(proof, reg, from, to)?;
+    let after_proof = transport(proof, reg, _from, to)?;
     let after = fragility_score(&after_proof) as i64;
     Ok(after - before)
 }
