@@ -39,13 +39,13 @@ Automatically transport sequent proofs across rule-set updates (e.g., remove `Cu
 ## ⚡ Quickstart
 
 ```bash
-# Build, lint, test
-cargo fmt --all
-cargo clippy -- -D warnings
-cargo test
+# 1) Toolchain
+rustup toolchain install stable
+rustup default stable
 
-# (optional) Generate docs
-cargo doc --no-deps --open
+# 2) Build + unit tests
+cargo build
+cargo test
 
 ### Library API (new section)
 ```md
