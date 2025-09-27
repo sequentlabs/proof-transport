@@ -1,5 +1,3 @@
-// tests/golden.rs
-
 use proof_transport::{
     ast::Proof,
     cut_eliminate_all,
@@ -20,21 +18,21 @@ fn golden_example_runs() {
 
     let before = fragility_score(&p);
 
-    // Run both cut eliminators to ensure they’re consistent
-    let q = cut_eliminate_all(&p);
+    // Run both elimination functions to verify consistency
+    let q_all = cut_eliminate_all(&p);
     let q_root = cut_eliminate_root(&p);
 
-    validate_local_wf(&q).unwrap();
+    validate_local_wf(&q_all).unwrap();
     validate_local_wf(&q_root).unwrap();
 
-    let after = fragility_score(&q);
+    let after_all = fragility_score(&q_all);
     let after_root = fragility_score(&q_root);
 
     assert!(
-        after < before,
+        after_all < before,
         "fragility did not drop (cut_eliminate_all): {} -> {}",
         before,
-        after
+        after_all
     );
 
     assert!(
