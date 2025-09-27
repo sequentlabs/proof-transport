@@ -6,7 +6,7 @@ use crate::{
 };
 
 /// Map rule strings (as they appear in JSON/examples) to RuleId.
-/// Names/case match tests exactly.
+/// Accept both canonical and legacy aliases used by the examples.
 fn rule_from_str(s: &str) -> Option<RuleId> {
     Some(match s {
         "Id" => Id,
@@ -15,8 +15,9 @@ fn rule_from_str(s: &str) -> Option<RuleId> {
         "AndL1" => AndL1,
         "AndL2" => AndL2,
         "OrL" => OrL,
-        "Or1" => Or1,
-        "Or2" => Or2,
+        // Accept legacy OrR1/OrR2 names in examples; normalize to Or1/Or2.
+        "Or1" | "OrR1" => Or1,
+        "Or2" | "OrR2" => Or2,
         "ImpL" => ImpL,
         "ImpR" => ImpR,
         "Cut" => Cut,
