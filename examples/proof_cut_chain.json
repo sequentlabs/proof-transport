@@ -1,0 +1,35 @@
+{
+  "root": "c1",
+  "nodes": [
+    {
+      "id": "c1",
+      "rule": "Cut",
+      "premises": ["c2", "a3"],
+      "sequent": { "left": ["P"], "right": ["P"] }
+    },
+    {
+      "id": "c2",
+      "rule": "Cut",
+      "premises": ["a1", "a2"],
+      "sequent": { "left": ["P"], "right": ["P"] }
+    },
+    {
+      "id": "a1",
+      "rule": "Axiom",
+      "premises": [],
+      "sequent": { "left": ["P"], "right": ["P"] }
+    },
+    {
+      "id": "a2",
+      "rule": "Axiom",
+      "premises": [],
+      "sequent": { "left": ["Q"], "right": ["Q"] }
+    },
+    {
+      "id": "a3",
+      "rule": "Axiom",
+      "premises": [],
+      "sequent": { "left": ["R"], "right": ["R"] }
+    }
+  ]
+}
