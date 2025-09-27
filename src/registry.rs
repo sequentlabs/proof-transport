@@ -1,6 +1,7 @@
 use std::collections::HashSet;
 
-/// Rule identifiers used throughout Phase‑1.
+/// Rule identifiers used throughout Phase-1.
+/// (Names match tests & JSON exactly.)
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
 pub enum RuleId {
     Id,
@@ -17,24 +18,21 @@ pub enum RuleId {
 }
 
 /// A point-in-time rule configuration used by tests:
-/// TimeSlice { t, enabled_rules }
+/// `TimeSlice { t, enabled }`.
 #[derive(Debug, Clone)]
 pub struct TimeSlice {
     pub t: u64,
-    pub enabled_rules: HashSet<RuleId>,
+    pub enabled: HashSet<RuleId>,   // ← final field name used by tests
 }
 
 impl Default for TimeSlice {
     fn default() -> Self {
-        Self {
-            t: 0,
-            enabled_rules: HashSet::new(),
-        }
+        Self { t: 0, enabled: HashSet::new() }
     }
 }
 
-/// Registry holds an ordered set of time slices.
-/// Phase‑1 needs only "what is enabled at logical time t".
+/// Registry holds an ordered set of time slices (ascending by `t`).
+/// Phase-1 needs only "what is enabled at logical time t".
 #[derive(Debug, Default, Clone)]
 pub struct Registry {
     pub times: Vec<TimeSlice>,
@@ -47,7 +45,7 @@ impl Registry {
         let mut current = HashSet::new();
         for slice in &self.times {
             if slice.t <= t {
-                current = slice.enabled_rules.clone();
+                current = slice.enabled.clone();
             } else {
                 break;
             }
