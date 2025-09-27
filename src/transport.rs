@@ -3,6 +3,7 @@ use anyhow::Result;
 use crate::{
     ast::Proof,
     cutelim::cut_eliminate_all,
+    frag::fragility_score,
     registry::{Registry, RuleId},
     validator::validate_local_wf,
 };
@@ -13,30 +14,38 @@ use crate::{
 /// - validate input
 /// - if target time disables Cut, eliminate all cuts
 /// - validate output
+///
+/// NOTE: We keep the `from` parameter in the public API for forward
+/// compatibility, but it is not used in Phase‑1. To satisfy `-D warnings`,
+/// we both allow unused variables for this function *and* touch `from`.
+#[allow(unused_variables)]
 pub fn transport(proof: &Proof, reg: &Registry, from: u64, to: u64) -> Result<Proof> {
-    // Keep `from` in the public API; silence -D unused-variables for now.
+    // Touch `from` so it is considered "used" even under clippy `-D warnings`.
+    // (It's `Copy`, so this is a no-op.)
     let _ = from;
 
-    // clone so we don't mutate the input
+    // Clone to avoid mutating input
     let mut p = proof.clone();
 
-    // 1) validate starting proof
+    // 1) Validate starting proof
     validate_local_wf(&p)?;
 
-    // 2) if Cut is disabled at target time, eliminate all cuts
-    if !reg.enabled_at(to).contains(&RuleId::Cut) {
+    // 2) Apply registry-aware transform: if Cut disabled at target => eliminate cuts
+    let enabled_to = reg.enabled_at(to);
+    if !enabled_to.contains(&RuleId::Cut) {
         p = cut_eliminate_all(&p);
     }
 
-    // 3) validate resulting proof
+    // 3) Validate resulting proof
     validate_local_wf(&p)?;
+
     Ok(p)
 }
 
-/// Convenience: change in fragility across a transport step.
+/// Convenience helper for tests/metrics
 pub fn fragility_delta(proof: &Proof, reg: &Registry, from: u64, to: u64) -> Result<i64> {
-    let before = crate::frag::fragility_score(proof) as i64;
+    let before = fragility_score(proof) as i64;
     let after_proof = transport(proof, reg, from, to)?;
-    let after = crate::frag::fragility_score(&after_proof) as i64;
+    let after = fragility_score(&after_proof) as i64;
     Ok(after - before)
 }
