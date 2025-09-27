@@ -66,6 +66,24 @@ Transport a proof across a registry change and compute fragility deltas.
   ☐ Registry unit tests  
   ☐ Rustdoc polish
 
+## Golden examples
+
+The CI “golden harness” scans `examples/` and runs a light transport + WF check on each JSON.
+These are intentionally small graphs that exercise specific behaviors:
+
+| File                          | What it exercises                                    |
+|------------------------------|-------------------------------------------------------|
+| `proof_with_cut.json`        | Single root `Cut`; fragility must strictly drop       |
+| `proof_cut_chain.json`       | Root `Cut` with a nested/internal `Cut`               |
+| `proof_cut_pair.json`        | Two sibling `Cut`s under a root `Cut`                 |
+| `proof_cut_free.json`        | Cut-free; elimination is a no-op (idempotence)        |
+| `proof_with_unreachable.json`| Extra unreachable node; pruning must remove it        |
+| `proof_fo_quantifiers.json`  | FO surface strings (`∀/∃`) to show syntax-agnosticism |
+
+Run locally:
+
+```bash
+cargo test -q
 
 ---
 
