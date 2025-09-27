@@ -13,7 +13,6 @@ use crate::{
 /// - validate input
 /// - if target time disables Cut, eliminate all cuts
 /// - validate output
-#[allow(unused_variables)] // keep `-D warnings` happy even if `from` is unused
 pub fn transport(proof: &Proof, reg: &Registry, _from: u64, to: u64) -> Result<Proof> {
     // Clone to avoid mutating input
     let mut p = proof.clone();
