@@ -4,13 +4,13 @@ pub mod ast;
 pub mod cutelim;
 pub mod frag;
 pub mod registry;
-pub mod validator;
 pub mod transport;
+pub mod validator;
 
-// Re-export key types and functions so downstream crates & tests can use directly.
+// Re-export key types and functions so downstream crates & tests can use directly
 pub use ast::*;
 pub use cutelim::{cut_eliminate_all, cut_eliminate_root};
 pub use frag::fragility_score;
 pub use registry::*;
-pub use validator::validate_local_wf;
 pub use transport::{fragility_delta, transport};
+pub use validator::validate_local_wf;
