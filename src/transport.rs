@@ -12,22 +12,25 @@ use crate::{
 /// If the target disables `Cut`, all cuts are eliminated.
 /// Returns the transformed proof.
 ///
-/// NOTE: `_from` is currently unused (kept for future diff/compat logic).
+/// Notes:
+/// - We currently don’t use `from` directly; keep it in the signature for API
+///   stability and future evolution, but mark it unused to keep CI happy.
 pub fn transport(proof: &Proof, reg: &Registry, _from: u64, to: u64) -> Result<Proof> {
     // Clone to avoid mutating input
     let mut p = proof.clone();
 
-    // Always validate the starting proof
+    // Validate starting proof
     validate_local_wf(&p)?;
 
-    // If Cut is disabled at target time, eliminate cuts
+    // If `Cut` is disabled at target time, eliminate all cuts
     let enabled_to = reg.enabled_at(to);
     if !enabled_to.contains(&RuleId::Cut) {
         p = cut_eliminate_all(&p);
     }
 
-    // Re-validate after transport
+    // Validate after transformation
     validate_local_wf(&p)?;
+
     Ok(p)
 }
 
