@@ -70,7 +70,8 @@ pub struct Sequent {
 enum SequentDe {
     Full(FullDe),
     // Use the built-in tuple type; Serde implements Deserialize for (A, B).
-    Tuple((Vec<Formula>, Formula)),
+    TupleMany((Vec<Formula>, Formula)), // [ [ctx...], thm ]
+    TupleOne((Formula, Formula)),       // [   ctx   , thm ]
     Shorthand(Formula),
 }
 
@@ -107,7 +108,8 @@ impl From<SequentDe> for Sequent {
                 };
                 Sequent { ctx: ctx_vec, thm }
             }
-            SequentDe::Tuple((ctx, thm)) => Sequent { ctx, thm },
+            SequentDe::TupleMany((ctx, thm)) => Sequent { ctx, thm },
+            SequentDe::TupleOne((ctx1, thm)) => Sequent { ctx: vec![ctx1], thm },
             SequentDe::Shorthand(thm) => Sequent {
                 ctx: Vec::new(),
                 thm,
