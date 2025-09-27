@@ -1,7 +1,8 @@
 use std::collections::HashSet;
 
-/// All inference rules our transport cares about.
-#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
+/// All inference rules we track in the registry.
+/// Keep these variant names stable — tests and other modules rely on them.
+#[derive(Clone, Debug, PartialEq, Eq, Hash)]
 pub enum RuleId {
     Id,
     BotI,
@@ -11,47 +12,46 @@ pub enum RuleId {
     OrR1,
     OrR2,
     OrL,
-    ImpR,
-    ImpL,
+    ImplR,
+    ImplL,
     Cut,
 }
 
-/// Logical time (Phase‑1 keeps this as a simple counter).
-pub type Time = u64;
-
-/// A change point in the rule‑enablement timeline.
-/// At logical time `at`, the set of enabled rules becomes `enabled`.
-#[derive(Debug, Clone, PartialEq, Eq)]
+/// A point-in-time snapshot of which rules are enabled.
+///
+/// Tests construct this with a struct literal, so the fields must be `pub`.
+#[derive(Clone, Debug, Default)]
 pub struct TimeSlice {
-    pub at: Time,
-    pub enabled: Vec<RuleId>,
+    /// Logical time of this slice.
+    pub at: u64,
+    /// Rules enabled at (and after) this instant until the next slice.
+    pub enabled: HashSet<RuleId>,
 }
 
-/// Rule‑enablement registry over logical time.
-/// Tests construct this with a struct literal, so `times` must be public.
-#[derive(Debug, Clone, Default)]
+/// Registry is the piecewise-constant enablement schedule over logical time.
+///
+/// Tests build this via `Registry { times: vec![...] }`, so the field is `pub`.
+#[derive(Clone, Debug, Default)]
 pub struct Registry {
     pub times: Vec<TimeSlice>,
 }
 
 impl Registry {
-    /// Return the set of rules enabled at logical time `t`.
-    /// If no slice exists at or before `t`, returns the empty set.
-    pub fn enabled_at(&self, t: Time) -> HashSet<RuleId> {
-        // Find the latest slice whose `at` <= t
-        let mut latest: Option<&TimeSlice> = None;
-        for ts in &self.times {
-            if ts.at <= t {
-                match latest {
-                    Some(best) if best.at >= ts.at => {} // keep best
-                    _ => latest = Some(ts),
-                }
+    /// Return the set of enabled rules that applies at logical time `t`.
+    ///
+    /// We select the last slice with `at <= t`. If none applies, return empty.
+    pub fn enabled_at(&self, t: u64) -> HashSet<RuleId> {
+        // assumes `times` is in non-decreasing order of `at`
+        let mut chosen: Option<&TimeSlice> = None;
+        for s in &self.times {
+            if s.at <= t {
+                chosen = Some(s);
+            } else {
+                break;
             }
         }
-
-        match latest {
-            Some(ts) => ts.enabled.iter().copied().collect(),
-            None => HashSet::new(),
-        }
+        chosen
+            .map(|s| s.enabled.clone())
+            .unwrap_or_else(HashSet::new)
     }
 }
