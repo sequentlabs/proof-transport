@@ -1,6 +1,6 @@
 // src/ast.rs
-use serde::{Deserialize, Deserializer, Serialize, Serializer};
 use serde::de::Error as DeError;
+use serde::{Deserialize, Deserializer, Serialize, Serializer};
 use serde_json::Value; // used by the robust Sequent deserializer
 
 /// ============================
@@ -52,7 +52,9 @@ pub enum FormulaNode {
     Exists(String, Box<Formula>),
 }
 
-// === Sequents ================================================================
+/// ============================
+/// Sequents
+/// ============================
 
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub struct Sequent {
@@ -82,39 +84,78 @@ impl<'de> Deserialize<'de> for Sequent {
             }
         }
 
+        // Parse thm as either a Formula or a single-element array [Formula].
+        fn parse_thm<E: DeError>(v: Value) -> Result<Formula, E> {
+            match v {
+                Value::Array(mut items) => match items.len() {
+                    1 => {
+                        let only = items.remove(0);
+                        serde_json::from_value::<Formula>(only).map_err(E::custom)
+                    }
+                    0 => Err(E::custom("succedent/thm was an empty array")),
+                    _ => Err(E::custom(
+                        "succedent/thm must be a formula or a single-element array",
+                    )),
+                },
+                other => serde_json::from_value::<Formula>(other).map_err(E::custom),
+            }
+        }
+
         // Accept multiple encodings:
         //  1) "φ"                        (shorthand; ctx=[])
         //  2) [ctx, thm]                 (ctx can be a single formula or an array)
         //  3) [ctx, <sep>, thm]          (<sep> ignored, e.g., "⊢", "=>")
         //  4) { ctx?: [...]/formula, thm|goal|rhs|succ|conclusion|... }
         let seq = match v {
-            // 1) Shorthand string
-            Value::String(s) => Sequent { ctx: Vec::new(), thm: Formula::Text(s) },
+            // 1) Shorthand string for the whole sequent.
+            Value::String(s) => Sequent {
+                ctx: Vec::new(),
+                thm: Formula::Text(s),
+            },
 
             // 2) and 3) Tuple forms
             Value::Array(mut arr) => match arr.len() {
                 2 => {
-                    let thm = parse_formula::<D::Error>(arr.remove(1))?;
+                    let thm = parse_thm::<D::Error>(arr.remove(1))?;
                     let ctx = parse_ctx::<D::Error>(arr.remove(0))?;
                     Sequent { ctx, thm }
                 }
                 3 => {
-                    let thm = parse_formula::<D::Error>(arr.remove(2))?;
+                    let thm = parse_thm::<D::Error>(arr.remove(2))?;
                     let ctx = parse_ctx::<D::Error>(arr.remove(0))?;
                     // arr[1] is a separator like "⊢" or "=>"; ignore.
                     Sequent { ctx, thm }
                 }
-                _ => return Err(D::Error::custom("Sequent array must be [ctx, thm] or [ctx, sep, thm]")),
+                _ => {
+                    return Err(D::Error::custom(
+                        "Sequent array must be [ctx, thm] or [ctx, sep, thm]",
+                    ))
+                }
             },
 
             // 4) Object form with tolerant key names and a fallback heuristic
             Value::Object(mut obj) => {
                 // Common synonyms seen in examples / golden data.
                 const THM_KEYS: &[&str] = &[
-                    "thm", "goal", "rhs", "succ", "succedent", "conclusion", "cons", "consequent",
+                    "thm",
+                    "goal",
+                    "rhs",
+                    "succ",
+                    "succedent",
+                    "conclusion",
+                    "cons",
+                    "consequent",
                 ];
                 const CTX_KEYS: &[&str] = &[
-                    "ctx", "context", "ants", "assumptions", "lhs", "left", "antecedent", "gamma", "Γ",
+                    "ctx",
+                    "context",
+                    "ants",
+                    "assumptions",
+                    "lhs",
+                    "left",
+                    "antecedent",
+                    "gamma",
+                    "Γ",
                 ];
 
                 // Try the synonyms first.
@@ -122,11 +163,19 @@ impl<'de> Deserialize<'de> for Sequent {
                 let mut ctx_opt = CTX_KEYS.iter().find_map(|k| obj.remove(*k));
 
                 // Fallback heuristic if keys aren't present:
-                // pick an array value as ctx and a non-array as thm.
+                // pick an array value as ctx and a non-array (or single-element array) as thm.
                 if thm_opt.is_none() {
+                    // Prefer a non-array value as `thm`.
                     thm_opt = obj
                         .iter()
                         .find_map(|(_, v)| if !v.is_array() { Some(v.clone()) } else { None });
+                    // If everything is arrays, allow a single-element array as `thm`.
+                    if thm_opt.is_none() {
+                        thm_opt = obj.iter().find_map(|(_, v)| match v {
+                            Value::Array(a) if a.len() == 1 => Some(v.clone()),
+                            _ => None,
+                        });
+                    }
                 }
                 if ctx_opt.is_none() {
                     ctx_opt = obj
@@ -145,7 +194,7 @@ impl<'de> Deserialize<'de> for Sequent {
                     None => Vec::new(),
                 };
 
-                let thm = parse_formula::<D::Error>(thm_val)?;
+                let thm = parse_thm::<D::Error>(thm_val)?;
                 Sequent { ctx, thm }
             }
 
@@ -169,7 +218,11 @@ impl Serialize for Sequent {
             #[serde(rename = "thm")]
             thm: &'a Formula,
         }
-        Full { ctx: &self.ctx, thm: &self.thm }.serialize(s)
+        Full {
+            ctx: &self.ctx,
+            thm: &self.thm,
+        }
+        .serialize(s)
     }
 }
 
