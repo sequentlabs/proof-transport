@@ -69,7 +69,8 @@ pub struct Sequent {
 #[serde(untagged)]
 enum SequentDe {
     Full(FullDe),
-    Tuple(SeqTuple),
+    // Use the built-in tuple type; Serde implements Deserialize for (A, B).
+    Tuple((Vec<Formula>, Formula)),
     Shorthand(Formula),
 }
 
@@ -95,13 +96,6 @@ struct FullDe {
     thm: Formula,
 }
 
-/// Tuple/array form: [ ctx, thm ]
-#[derive(Deserialize)]
-struct SeqTuple(
-    #[serde(default)] Vec<Formula>, // ctx (defaults to [])
-    Formula,                        // thm
-);
-
 impl From<SequentDe> for Sequent {
     fn from(s: SequentDe) -> Self {
         match s {
@@ -113,7 +107,7 @@ impl From<SequentDe> for Sequent {
                 };
                 Sequent { ctx: ctx_vec, thm }
             }
-            SequentDe::Tuple(SeqTuple(ctx, thm)) => Sequent { ctx, thm },
+            SequentDe::Tuple((ctx, thm)) => Sequent { ctx, thm },
             SequentDe::Shorthand(thm) => Sequent {
                 ctx: Vec::new(),
                 thm,
