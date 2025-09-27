@@ -11,17 +11,13 @@ use crate::{
 /// Transport a proof between registry times.
 ///
 /// Phase‑1 behavior:
-/// 1) validate input
-/// 2) if the *target* time disables `Cut`, eliminate all cuts
-/// 3) validate output
+///  - validate input
+///  - if target time disables Cut, eliminate all cuts
+///  - validate output
 ///
-/// NOTE: The `from` parameter is part of the public API. We do not need it for
-/// Phase‑1 semantics, but we *intentionally* exercise it here so `-D warnings`
-/// does not fail the build.
-pub fn transport(proof: &Proof, reg: &Registry, from: u64, to: u64) -> Result<Proof> {
-    // Mark `from` as intentionally used (keep API, satisfy -D warnings)
-    let _enabled_from = reg.enabled_at(from);
-
+/// NOTE: we intentionally underscore the `from` parameter to satisfy
+/// `-D warnings` with the current Phase‑1 semantics (it's not used).
+pub fn transport(proof: &Proof, reg: &Registry, _from: u64, to: u64) -> Result<Proof> {
     // Clone to avoid mutating input
     let mut p = proof.clone();
 
@@ -40,7 +36,7 @@ pub fn transport(proof: &Proof, reg: &Registry, from: u64, to: u64) -> Result<Pr
     Ok(p)
 }
 
-/// Convenience helper used by tests/metrics.
+/// Convenience helper for tests/metrics.
 pub fn fragility_delta(proof: &Proof, reg: &Registry, from: u64, to: u64) -> Result<i64> {
     let before = fragility_score(proof) as i64;
     let after_proof = transport(proof, reg, from, to)?;
