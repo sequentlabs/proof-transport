@@ -1,48 +1,62 @@
-use serde::{de::Deserializer, Deserialize, Serialize};
+use serde::{de::Error as DeError, Deserialize, Deserializer, Serialize};
 
-/// -------------------------
-/// Terms
-/// -------------------------
+//
+// Terms
+//
 
 #[derive(Debug, Clone, Serialize, PartialEq, Eq, Hash)]
+#[serde(tag = "tag", content = "fields")] // canonical serialization form
 pub enum Term {
     Var(String),
     Func { name: String, args: Vec<Term> },
 }
 
-#[derive(Debug, Deserialize)]
-#[serde(tag = "tag", content = "fields")]
-enum TermTagged {
-    Var(String),
-    Func { name: String, args: Vec<Term> },
-}
-
-#[derive(Debug, Deserialize)]
-#[serde(untagged)]
-enum TermEither {
-    Tagged(TermTagged),
-    String(String),
-}
-
+// Accept both canonical {tag,fields} and permissive shorthands (e.g. "x")
 impl<'de> Deserialize<'de> for Term {
-    fn deserialize<D>(deserializer: D) -> Result<Self, D::Error>
+    fn deserialize<D>(de: D) -> Result<Self, D::Error>
     where
         D: Deserializer<'de>,
     {
-        match TermEither::deserialize(deserializer)? {
-            TermEither::String(s) => Ok(Term::Var(s)),
-            TermEither::Tagged(TermTagged::Var(s)) => Ok(Term::Var(s)),
-            TermEither::Tagged(TermTagged::Func { name, args }) => Ok(Term::Func { name, args }),
+        #[derive(Deserialize)]
+        #[serde(tag = "tag", content = "fields")]
+        enum Canon {
+            Var(String),
+            Func { name: String, args: Vec<Term> },
+        }
+        #[derive(Deserialize)]
+        #[serde(untagged)]
+        enum Any {
+            Canon(Canon),
+            // Shorthand for variables: "x"
+            Str(String),
+            // Alternative external-tag-like spellings people sometimes write:
+            VarObj { Var: String },
+            FuncObj { Func: FuncAux },
+        }
+        #[derive(Deserialize)]
+        struct FuncAux {
+            name: String,
+            args: Vec<Term>,
+        }
+
+        match Any::deserialize(de)? {
+            Any::Canon(Canon::Var(v)) => Ok(Term::Var(v)),
+            Any::Canon(Canon::Func { name, args }) => Ok(Term::Func { name, args }),
+            Any::Str(s) => Ok(Term::Var(s)),
+            Any::VarObj { Var: v } => Ok(Term::Var(v)),
+            Any::FuncObj {
+                Func: FuncAux { name, args },
+            } => Ok(Term::Func { name, args }),
         }
     }
 }
 
-/// -------------------------
-/// Formulas
-/// -------------------------
+//
+// Formulae
+//
 
 #[derive(Debug, Clone, Serialize, PartialEq, Eq, Hash)]
-#[allow(clippy::large_enum_variant)]
+#[serde(tag = "tag", content = "fields")] // canonical serialization form
 pub enum Formula {
     Var(String),
     Bot,
@@ -55,96 +69,117 @@ pub enum Formula {
     Exists(String, Box<Formula>),
 }
 
-#[derive(Debug, Deserialize)]
-#[serde(tag = "tag", content = "fields")]
-enum FormulaTagged {
-    Var(String),
-    Bot,
-    Top,
-    Pred { name: String, args: Vec<Term> },
-    And(Box<Formula>, Box<Formula>),
-    Or(Box<Formula>, Box<Formula>),
-    Imp(Box<Formula>, Box<Formula>),
-    Forall(String, Box<Formula>),
-    Exists(String, Box<Formula>),
-}
-
-#[derive(Debug, Deserialize)]
-#[serde(untagged)]
-enum FormulaEither {
-    Tagged(FormulaTagged),
-    String(String),
-}
-
+// Accept canonical {tag,fields} *and* permissive shorthands:
+//  - a plain string is treated as a propositional variable
+//  - external-tag-like spellings {Var: "..."} or {Pred: {name, args}}.
 impl<'de> Deserialize<'de> for Formula {
-    fn deserialize<D>(deserializer: D) -> Result<Self, D::Error>
+    fn deserialize<D>(de: D) -> Result<Self, D::Error>
     where
         D: Deserializer<'de>,
     {
-        match FormulaEither::deserialize(deserializer)? {
-            // Treat any bare string as a variable formula.
-            FormulaEither::String(s) => Ok(Formula::Var(s)),
-            FormulaEither::Tagged(FormulaTagged::Var(s)) => Ok(Formula::Var(s)),
-            FormulaEither::Tagged(FormulaTagged::Bot) => Ok(Formula::Bot),
-            FormulaEither::Tagged(FormulaTagged::Top) => Ok(Formula::Top),
-            FormulaEither::Tagged(FormulaTagged::Pred { name, args }) => {
-                Ok(Formula::Pred { name, args })
-            }
-            FormulaEither::Tagged(FormulaTagged::And(a, b)) => Ok(Formula::And(a, b)),
-            FormulaEither::Tagged(FormulaTagged::Or(a, b)) => Ok(Formula::Or(a, b)),
-            FormulaEither::Tagged(FormulaTagged::Imp(a, b)) => Ok(Formula::Imp(a, b)),
-            FormulaEither::Tagged(FormulaTagged::Forall(x, f)) => Ok(Formula::Forall(x, f)),
-            FormulaEither::Tagged(FormulaTagged::Exists(x, f)) => Ok(Formula::Exists(x, f)),
+        #[derive(Deserialize)]
+        #[serde(tag = "tag", content = "fields")]
+        enum Canon {
+            Var(String),
+            Bot,
+            Top,
+            Pred { name: String, args: Vec<Term> },
+            And(Box<Formula>, Box<Formula>),
+            Or(Box<Formula>, Box<Formula>),
+            Imp(Box<Formula>, Box<Formula>),
+            Forall(String, Box<Formula>),
+            Exists(String, Box<Formula>),
         }
+
+        #[derive(Deserialize)]
+        struct PredAux {
+            name: String,
+            args: Vec<Term>,
+        }
+
+        #[derive(Deserialize)]
+        #[serde(untagged)]
+        enum Any {
+            Canon(Canon),
+            // Plain string => variable
+            Str(String),
+            // External-tag-like alternates
+            VarObj { Var: String },
+            PredObj { Pred: PredAux },
+            AndObj { And: (Box<Formula>, Box<Formula>) },
+            OrObj { Or: (Box<Formula>, Box<Formula>) },
+            ImpObj { Imp: (Box<Formula>, Box<Formula>) },
+            ForallObj { Forall: (String, Box<Formula>) },
+            ExistsObj { Exists: (String, Box<Formula>) },
+            BotObj { Bot: () },
+            TopObj { Top: () },
+        }
+
+        Ok(match Any::deserialize(de)? {
+            Any::Canon(Canon::Var(v)) => Formula::Var(v),
+            Any::Canon(Canon::Bot) | Any::BotObj { Bot: () } => Formula::Bot,
+            Any::Canon(Canon::Top) | Any::TopObj { Top: () } => Formula::Top,
+            Any::Canon(Canon::Pred { name, args }) => Formula::Pred { name, args },
+            Any::Canon(Canon::And(a, b)) | Any::AndObj { And: (a, b) } => Formula::And(a, b),
+            Any::Canon(Canon::Or(a, b)) | Any::OrObj { Or: (a, b) } => Formula::Or(a, b),
+            Any::Canon(Canon::Imp(a, b)) | Any::ImpObj { Imp: (a, b) } => Formula::Imp(a, b),
+            Any::Canon(Canon::Forall(x, f)) | Any::ForallObj { Forall: (x, f) } => {
+                Formula::Forall(x, f)
+            }
+            Any::Canon(Canon::Exists(x, f)) | Any::ExistsObj { Exists: (x, f) } => {
+                Formula::Exists(x, f)
+            }
+            Any::VarObj { Var: v } | Any::Str(v) => Formula::Var(v),
+            Any::PredObj { Pred: PredAux { name, args } } => Formula::Pred { name, args },
+        })
     }
 }
 
-/// -------------------------
-/// Sequents
-/// -------------------------
+//
+// Sequents
+//
 
 #[derive(Debug, Clone, Serialize, PartialEq, Eq)]
 pub struct Sequent {
-    /// If omitted in JSON, defaults to `[]`.
-    #[serde(default)]
     pub ctx: Vec<Formula>,
     pub goal: Formula,
 }
 
-#[derive(Debug, Deserialize)]
-#[serde(untagged)]
-enum SequentEither {
-    // Normal object form
-    Obj {
-        #[serde(default)]
-        ctx: Vec<Formula>,
-        goal: Formula,
-    },
-    // A single formula means: ctx = [], goal = <that formula>
-    OnlyFormula(Formula),
-    // And for extra permissiveness: a bare string equals Var(string)
-    OnlyString(String),
-}
-
+// Accept:
+//   - canonical object { ctx: [...], goal: ... }
+//   - object { goal: ... } (ctx defaults to [])
+//   - bare Formula (interpreted as goal with empty ctx)
 impl<'de> Deserialize<'de> for Sequent {
-    fn deserialize<D>(deserializer: D) -> Result<Self, D::Error>
+    fn deserialize<D>(de: D) -> Result<Self, D::Error>
     where
         D: Deserializer<'de>,
     {
-        match SequentEither::deserialize(deserializer)? {
-            SequentEither::Obj { ctx, goal } => Ok(Sequent { ctx, goal }),
-            SequentEither::OnlyFormula(goal) => Ok(Sequent { ctx: vec![], goal }),
-            SequentEither::OnlyString(s) => Ok(Sequent {
-                ctx: vec![],
-                goal: Formula::Var(s),
-            }),
+        #[derive(Deserialize)]
+        struct Canon {
+            #[serde(default)]
+            ctx: Vec<Formula>,
+            goal: Formula,
+        }
+
+        #[derive(Deserialize)]
+        #[serde(untagged)]
+        enum Any {
+            Canon(Canon),
+            GoalOnly { goal: Formula },
+            JustGoal(Formula),
+        }
+
+        match Any::deserialize(de)? {
+            Any::Canon(Canon { ctx, goal }) => Ok(Sequent { ctx, goal }),
+            Any::GoalOnly { goal } => Ok(Sequent { ctx: vec![], goal }),
+            Any::JustGoal(goal) => Ok(Sequent { ctx: vec![], goal }),
         }
     }
 }
 
-/// -------------------------
-/// Proofs
-/// -------------------------
+//
+// Proof trees
+//
 
 #[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Eq)]
 pub struct Proof {
@@ -156,7 +191,6 @@ pub struct Proof {
 pub struct ProofNode {
     pub id: String,
     pub rule: String,
-    /// If omitted, defaults to an empty list.
     #[serde(default)]
     pub premises: Vec<String>,
     pub sequent: Sequent,
