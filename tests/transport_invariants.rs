@@ -47,7 +47,6 @@ fn fragility_strictly_drops_on_cut_examples() {
 
 /// For inputs with no root Cut (or no relevant policy trigger),
 /// elimination may be a no-op, but it must *never* increase fragility.
-/// (This also guards against regressions in the scoring function.)
 #[test]
 fn fragility_never_increases_on_all_examples() {
     let paths = [
