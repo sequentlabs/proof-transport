@@ -1,5 +1,6 @@
 // src/ast.rs
 use serde::{Deserialize, Deserializer, Serialize, Serializer};
+use serde_json::Value; // for tolerant 3-tuple sequent [ctx, <sep>, thm]
 
 /// ============================
 /// Terms
@@ -70,8 +71,10 @@ pub struct Sequent {
 enum SequentDe {
     Full(FullDe),
     // Use the built-in tuple type; Serde implements Deserialize for (A, B).
-    TupleMany((Vec<Formula>, Formula)), // [ [ctx...], thm ]
-    TupleOne((Formula, Formula)),       // [   ctx   , thm ]
+    TupleMany((Vec<Formula>, Formula)),             // [ [ctx...], thm ]
+    TupleOne((Formula, Formula)),                   // [   ctx   , thm ]
+    TripleMany((Vec<Formula>, Value, Formula)),     // [ [ctx...], <sep>, thm ]
+    TripleOne((Formula, Value, Formula)),           // [   ctx   , <sep>, thm ]
     Shorthand(Formula),
 }
 
@@ -110,6 +113,8 @@ impl From<SequentDe> for Sequent {
             }
             SequentDe::TupleMany((ctx, thm)) => Sequent { ctx, thm },
             SequentDe::TupleOne((ctx1, thm)) => Sequent { ctx: vec![ctx1], thm },
+            SequentDe::TripleMany((ctx, _sep, thm)) => Sequent { ctx, thm },
+            SequentDe::TripleOne((ctx1, _sep, thm)) => Sequent { ctx: vec![ctx1], thm },
             SequentDe::Shorthand(thm) => Sequent {
                 ctx: Vec::new(),
                 thm,
