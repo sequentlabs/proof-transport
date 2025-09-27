@@ -1,39 +1,30 @@
-use serde::{de, Deserialize, Deserializer, Serialize};
+use serde::{Deserialize, Serialize};
 
-/// Phase‑1 treats formulas and terms as opaque text.
-/// (Examples and the JSON schema feed plain strings.)
-pub type Term = String;
-pub type Formula = String;
+#[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Eq, Hash)]
+#[serde(tag = "tag", content = "fields")]
+pub enum Term {
+    Var(String),
+    Func { name: String, args: Vec<Term> },
+}
 
-/// A sequent. In our examples this is usually an object
-/// `{ "ctx": [...], "goal": "..." }`, but some historical files
-/// encode it as just a string (goal only). We accept *both*.
-#[derive(Debug, Clone, Serialize, PartialEq, Eq)]
+#[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Eq, Hash)]
+#[serde(tag = "tag", content = "fields")]
+pub enum Formula {
+    Var(String),
+    Bot,
+    Top,
+    Pred { name: String, args: Vec<Term> },
+    And(Box<Formula>, Box<Formula>),
+    Or(Box<Formula>, Box<Formula>),
+    Imp(Box<Formula>, Box<Formula>),
+    Forall(String, Box<Formula>),
+    Exists(String, Box<Formula>),
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Eq)]
 pub struct Sequent {
     pub ctx: Vec<Formula>,
     pub goal: Formula,
-}
-
-/// Internal helper representation used only for deserialization.
-#[derive(Debug, Deserialize)]
-#[serde(untagged)]
-enum SequentRepr {
-    // Normal object form
-    Obj { ctx: Vec<Formula>, goal: Formula },
-    // Legacy / minimal form: just a goal string
-    GoalOnly(Formula),
-}
-
-impl<'de> Deserialize<'de> for Sequent {
-    fn deserialize<D>(deserializer: D) -> Result<Self, D::Error>
-    where
-        D: Deserializer<'de>,
-    {
-        match SequentRepr::deserialize(deserializer)? {
-            SequentRepr::Obj { ctx, goal } => Ok(Sequent { ctx, goal }),
-            SequentRepr::GoalOnly(goal) => Ok(Sequent { ctx: Vec::new(), goal }),
-        }
-    }
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Eq)]
