@@ -1,72 +1,58 @@
 use std::collections::HashSet;
 
-/// Identifier for inference rules used across the crate (validator, transport, tests).
+/// Rule identifiers used throughout Phase‑1.
+/// (Names match tests & JSON exactly.)
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
 pub enum RuleId {
     Id,
-    BotT,
-    AndR,
+    BotI,
     AndL1,
     AndL2,
-    OrR1,
-    OrR2,
+    AndR,
     OrL,
-    ImpR,
+    Or1,
+    Or2,
     ImpL,
+    ImpR,
     Cut,
 }
 
-/// A snapshot of which rules are enabled at logical time `t`.
-/// Tests construct this with a struct literal, so keep the field names/public-ness.
+/// A point-in-time rule configuration used by tests:
+/// TimeSlice { t, enabled_rules }
 #[derive(Debug, Clone)]
 pub struct TimeSlice {
     pub t: u64,
-    pub enabled_rules: Vec<RuleId>,
+    pub enabled_rules: HashSet<RuleId>,
 }
 
-/// Registry of rule enablement over (logical) time.
-/// Tests construct this with a struct literal, so keep `times` public.
-#[derive(Debug, Clone)]
+impl Default for TimeSlice {
+    fn default() -> Self {
+        Self {
+            t: 0,
+            enabled_rules: HashSet::new(),
+        }
+    }
+}
+
+/// Registry holds an ordered set of time slices.
+/// Phase‑1 needs only "what is enabled at logical time t".
+#[derive(Debug, Default, Clone)]
 pub struct Registry {
     pub times: Vec<TimeSlice>,
 }
 
 impl Registry {
-    /// Convenience constructor.
-    pub fn new(times: Vec<TimeSlice>) -> Self {
-        Self { times }
-    }
-
-    /// Set of rules enabled at logical time `t`.
-    ///
-    /// Contract expected by tests and transport:
-    /// - Find the most recent `TimeSlice` with `ts.t <= t`.
-    /// - If none exist, return empty set.
-    /// - The slice’s `enabled_rules` is interpreted as the full set at that time.
+    /// Return the set of rules enabled at logical time `t`.
+    /// Semantics: last slice with `slice.t <= t` wins.
     pub fn enabled_at(&self, t: u64) -> HashSet<RuleId> {
-        self.times
-            .iter()
-            .rev()
-            .find(|ts| ts.t <= t)
-            .map(|ts| ts.enabled_rules.iter().copied().collect())
-            .unwrap_or_else(HashSet::new)
-    }
-}
-
-impl Default for Registry {
-    /// Sensible default used by unit/golden tests:
-    /// - At `t = 0`: all rules (including `Cut`) are enabled
-    /// - At `t = 1`: everything except `Cut` (so transports to `t >= 1` will cut-eliminate)
-    fn default() -> Self {
-        use RuleId::*;
-        let all = vec![Id, BotT, AndR, AndL1, AndL2, OrR1, OrR2, OrL, ImpR, ImpL, Cut];
-        let no_cut = vec![Id, BotT, AndR, AndL1, AndL2, OrR1, OrR2, OrL, ImpR, ImpL];
-
-        Self {
-            times: vec![
-                TimeSlice { t: 0, enabled_rules: all },
-                TimeSlice { t: 1, enabled_rules: no_cut },
-            ],
+        let mut current = HashSet::new();
+        for slice in &self.times {
+            if slice.t <= t {
+                current = slice.enabled_rules.clone();
+            } else {
+                break;
+            }
         }
+        current
     }
 }
