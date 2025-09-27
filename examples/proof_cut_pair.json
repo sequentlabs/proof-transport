@@ -1,0 +1,47 @@
+{
+  "root": "c_top",
+  "nodes": [
+    {
+      "id": "c_top",
+      "rule": "Cut",
+      "premises": ["c_left", "c_right"],
+      "sequent": { "left": ["p"], "right": ["p"] }
+    },
+    {
+      "id": "c_left",
+      "rule": "Cut",
+      "premises": ["a1", "a2"],
+      "sequent": { "left": ["p"], "right": ["p"] }
+    },
+    {
+      "id": "c_right",
+      "rule": "Cut",
+      "premises": ["a3", "a4"],
+      "sequent": { "left": ["r"], "right": ["r"] }
+    },
+    {
+      "id": "a1",
+      "rule": "Axiom",
+      "premises": [],
+      "sequent": { "left": ["p"], "right": ["p"] }
+    },
+    {
+      "id": "a2",
+      "rule": "Axiom",
+      "premises": [],
+      "sequent": { "left": ["q"], "right": ["q"] }
+    },
+    {
+      "id": "a3",
+      "rule": "Axiom",
+      "premises": [],
+      "sequent": { "left": ["r"], "right": ["r"] }
+    },
+    {
+      "id": "a4",
+      "rule": "Axiom",
+      "premises": [],
+      "sequent": { "left": ["s"], "right": ["s"] }
+    }
+  ]
+}
