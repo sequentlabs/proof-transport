@@ -1,5 +1,5 @@
 use proof_transport::{
-    ast::Proof, cutelim::cut_eliminate_root, frag::fragility_score, validator::validate_local_wf,
+    ast::Proof, cutelim::cut_eliminate_all, frag::fragility_score, validator::validate_local_wf,
 };
 use serde_json::from_reader;
 use std::fs::File;
@@ -10,7 +10,7 @@ fn cut_elimination_rewrites_root_and_drops_fragility() {
     validate_local_wf(&p).unwrap();
 
     let before_score = fragility_score(&p);
-    let q = cut_eliminate_root(&p);
+    let q = cut_eliminate_all(&p);
     validate_local_wf(&q).unwrap();
 
     // Fragility must drop strictly (we removed the `Cut` root)
