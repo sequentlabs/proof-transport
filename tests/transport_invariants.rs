@@ -1,5 +1,5 @@
+// tests/transport_invariants.rs
 use std::fs::File;
-
 use serde_json::from_reader;
 
 use proof_transport::{
@@ -18,7 +18,7 @@ fn load(path: &str) -> Proof {
 #[test]
 fn fragility_strictly_drops_on_cut_examples() {
     let paths = [
-        "examples/proof_with_cut.json", // existing root Cut
+        "examples/proof_with_cut.json",  // existing root Cut
         "examples/proof_cut_chain.json", // nested/internal Cut
         "examples/proof_cut_pair.json",  // sibling Cuts
     ];
@@ -40,7 +40,7 @@ fn fragility_strictly_drops_on_cut_examples() {
 }
 
 /// For inputs with no root Cut (or no relevant policy trigger),
-/// elimination may be a no-op, but it must *never* increase fragility.
+/// elimination may be a no‑op, but it must never increase fragility.
 #[test]
 fn fragility_never_increases_on_all_examples() {
     let paths = [
