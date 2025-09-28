@@ -1,10 +1,7 @@
 // tests/invariants.rs
 
-#[path = "support.rs"]
-mod support;
-use support::parse_proof;
-
-use std::path::Path;
+mod support;            // pulls in tests/support.rs
+use support::load;      // tolerant loader (strict JSON first, then JSON5)
 
 use proof_transport::{
     ast::Proof,
@@ -13,19 +10,14 @@ use proof_transport::{
     validate_local_wf,
 };
 
-fn load(path: &str) -> Proof {
-    // Tolerant loader: tries strict JSON first, then sanitizes and retries.
-    parse_proof(Path::new(path)).expect("parse proof")
-}
-
 /// On these inputs we intentionally have a `Cut` at/near the root,
 /// so eliminating cuts must strictly drop fragility.
 #[test]
 fn fragility_strictly_drops_on_cut_examples() {
     let paths = [
-        "examples/proof_with_cut.json", // existing root Cut
-        "examples/proof_cut_chain.json", // nested/internal Cut
-        "examples/proof_cut_pair.json",  // sibling Cuts
+        "examples/proof_with_cut.json",      // existing root Cut
+        "examples/proof_cut_chain.json",     // nested/internal Cut
+        "examples/proof_cut_pair.json",      // sibling Cuts
     ];
 
     for path in paths {
@@ -46,6 +38,7 @@ fn fragility_strictly_drops_on_cut_examples() {
 
 /// For inputs with no root Cut (or no relevant policy trigger),
 /// elimination may be a no-op, but it must *never* increase fragility.
+/// (This also guards against regressions in the scoring function.)
 #[test]
 fn fragility_never_increases_on_all_examples() {
     let paths = [
