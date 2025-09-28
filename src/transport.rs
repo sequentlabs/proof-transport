@@ -16,20 +16,19 @@ use crate::{
 /// 2) if target time disables Cut, eliminate all cuts
 /// 3) validate output
 pub fn transport(proof: &Proof, reg: &Registry, _from: u64, to: u64) -> Result<Proof> {
-    let _ = _from; // keep strict lints happy
-    // ... rest of the function as-is ...
-}
+    // Keep strict lints happy; Phase‑1 semantics don’t depend on `from`.
+    let _ = _from;
 
-    // (Phase‑1 semantics do not depend on `from`.)
+    // What is enabled at the target time?
     let enabled_to = reg.enabled_at(to);
 
-    // Clone to avoid mutating input
+    // Clone to avoid mutating the caller’s proof.
     let mut p = proof.clone();
 
     // 1) Validate starting proof
     validate_local_wf(&p)?;
 
-    // 2) Apply registry‑aware transform: if Cut disabled at target => eliminate cuts
+    // 2) Apply registry‑aware transform: if Cut is disabled at the target, eliminate all cuts
     if !enabled_to.contains(&RuleId::Cut) {
         p = cut_eliminate_all(&p);
     }
@@ -40,7 +39,7 @@ pub fn transport(proof: &Proof, reg: &Registry, _from: u64, to: u64) -> Result<P
     Ok(p)
 }
 
-/// Convenience helper for tests/metrics
+/// Convenience helper for tests/metrics: change in fragility across a transport.
 pub fn fragility_delta(proof: &Proof, reg: &Registry, from: u64, to: u64) -> Result<i64> {
     let before = fragility_score(proof) as i64;
     let after_proof = transport(proof, reg, from, to)?;
