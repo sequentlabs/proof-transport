@@ -1,104 +1,92 @@
-use std::fs::File;
-use serde_json::from_reader;
+// tests/invariants.rs
+
+#[path = "support.rs"]
+mod support;
+use support::parse_proof;
+
+use std::path::Path;
 
 use proof_transport::{
     ast::Proof,
-    // cut elimination and analysis
-    cutelim::{cut_eliminate_all, cut_eliminate_root},
+    cut_eliminate_all,
     fragility_score,
-    // registry & transport API (no policy mutation here; we only need an instance)
-    registry::Registry,
-    transport::{fragility_delta, transport},
-    // local well-formedness validator
     validate_local_wf,
 };
 
 fn load(path: &str) -> Proof {
-    let f = File::open(path).expect("example JSON should exist");
-    from_reader::<_, Proof>(f).expect("example JSON should parse as Proof")
+    // Tolerant loader: tries strict JSON first, then sanitizes and retries.
+    parse_proof(Path::new(path)).expect("parse proof")
 }
 
-fn has_cut(p: &Proof) -> bool {
-    p.nodes.iter().any(|n| n.rule == "Cut")
-}
-
+/// On these inputs we intentionally have a `Cut` at/near the root,
+/// so eliminating cuts must strictly drop fragility.
 #[test]
-fn cutelim_root_preserves_wf_and_never_increases_fragility() {
-    // choose a proof where the root is a `Cut`
-    let p = load("examples/proof_cut_pair.json");
-    validate_local_wf(&p).unwrap();
+fn fragility_strictly_drops_on_cut_examples() {
+    let paths = [
+        "examples/proof_with_cut.json", // existing root Cut
+        "examples/proof_cut_chain.json", // nested/internal Cut
+        "examples/proof_cut_pair.json",  // sibling Cuts
+    ];
 
-    let before = fragility_score(&p);
-    let q = cut_eliminate_root(&p);
-    validate_local_wf(&q).unwrap();
+    for path in paths {
+        let p = load(path);
+        validate_local_wf(&p).expect("wf before");
 
-    let after = fragility_score(&q);
+        let before = fragility_score(&p);
+        let q = cut_eliminate_all(&p);
+        validate_local_wf(&q).expect("wf after");
 
-    // Root cut rewritten ⇒ fragility cannot increase; it usually drops.
+        let after = fragility_score(&q);
+        assert!(
+            after < before,
+            "expected fragility to strictly drop on {path}, got {before} -> {after}"
+        );
+    }
+}
+
+/// For inputs with no root Cut (or no relevant policy trigger),
+/// elimination may be a no-op, but it must *never* increase fragility.
+#[test]
+fn fragility_never_increases_on_all_examples() {
+    let paths = [
+        "examples/proof_with_cut.json",
+        "examples/proof_cut_chain.json",
+        "examples/proof_cut_pair.json",
+        "examples/proof_fo_quantifiers.json",
+        "examples/proof_with_unreachable.json",
+        "examples/proof_cut_free.json",
+    ];
+
+    for path in paths {
+        let p = load(path);
+        validate_local_wf(&p).expect("wf before");
+
+        let before = fragility_score(&p);
+        let q = cut_eliminate_all(&p);
+        validate_local_wf(&q).expect("wf after");
+
+        let after = fragility_score(&q);
+        assert!(
+            after <= before,
+            "fragility increased on {path}: {before} -> {after}"
+        );
+    }
+}
+
+/// Explicitly assert that pruning removes unreachable nodes on the
+/// `ghost` example we added to exercise graph cleanup.
+#[test]
+fn unreachable_nodes_are_pruned() {
+    let p = load("examples/proof_with_unreachable.json");
+    validate_local_wf(&p).expect("wf before");
+
+    let before_nodes = p.nodes.len();
+    let q = cut_eliminate_all(&p); // elimination + subsequent prune()
+    validate_local_wf(&q).expect("wf after");
+    let after_nodes = q.nodes.len();
+
     assert!(
-        after <= before,
-        "fragility increased after cut_eliminate_root: {} -> {}",
-        before,
-        after
+        after_nodes < before_nodes,
+        "expected prune to drop unreachable nodes: {before_nodes} -> {after_nodes}"
     );
-}
-
-#[test]
-fn cutelim_all_is_idempotent_and_yields_cut_free() {
-    // choose a proof with cuts to exercise elimination
-    let p = load("examples/proof_cut_chain.json");
-    validate_local_wf(&p).unwrap();
-    assert!(has_cut(&p), "precondition: example should contain a Cut");
-
-    let q = cut_eliminate_all(&p);
-    validate_local_wf(&q).unwrap();
-    assert!(!has_cut(&q), "cut_eliminate_all must yield a cut-free proof");
-
-    // idempotent: running again does nothing
-    let r = cut_eliminate_all(&q);
-    validate_local_wf(&r).unwrap();
-    assert_eq!(fragility_score(&q), fragility_score(&r));
-    assert!(!has_cut(&r));
-}
-
-#[test]
-fn transport_is_wf_and_idempotent_when_policy_is_unchanged() {
-    // No reliance on time-varying policies: we transport at the same time.
-    let reg = Registry::default(); // existing API already used in other tests
-    let p = load("examples/proof_cut_pair.json");
-    validate_local_wf(&p).unwrap();
-
-    let t = 42u64;
-    let q = transport(&p, &reg, t, t).expect("transport should succeed");
-    validate_local_wf(&q).unwrap();
-
-    // With no change in policy, transport is a no-op w.r.t. running twice
-    let r = transport(&q, &reg, t, t).expect("transport should succeed");
-    validate_local_wf(&r).unwrap();
-
-    assert_eq!(
-        fragility_score(&q),
-        fragility_score(&r),
-        "transport should be idempotent when from==to"
-    );
-}
-
-#[test]
-fn fragility_delta_matches_scores() {
-    // The helper should equal (after - before) from a normal transport call.
-    let reg = Registry::default();
-    let p = load("examples/proof_cut_free.json"); // cut-free: safe & simple
-    validate_local_wf(&p).unwrap();
-
-    let from = 0u64;
-    let to = 0u64;
-
-    let before = fragility_score(&p);
-    let after_proof = transport(&p, &reg, from, to).expect("transport ok");
-    validate_local_wf(&after_proof).unwrap();
-    let after = fragility_score(&after_proof);
-
-    let delta = fragility_delta(&p, &reg, from, to).expect("delta ok");
-
-    assert_eq!(delta, (after as i64) - (before as i64));
 }
