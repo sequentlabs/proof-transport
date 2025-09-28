@@ -1,22 +1,11 @@
-// tests/transport_invariants.rs
+use std::fs::File;
 
-// Use the shared tolerant JSON loader (strips comments, trailing commas).
-#[path = "support.rs"]
-mod support;
-use support::parse_proof;
+use serde_json::from_reader;
 
-use std::path::Path;
-
-use proof_transport::{
-    ast::Proof,
-    cut_eliminate_all,
-    fragility_score,
-    validate_local_wf,
-};
+use proof_transport::{ast::Proof, cut_eliminate_all, fragility_score, validate_local_wf};
 
 fn load(path: &str) -> Proof {
-    // Tolerant loader: tries strict JSON first, then sanitizes and retries.
-    parse_proof(Path::new(path)).expect("parse proof")
+    from_reader(File::open(path).expect("open JSON")).expect("parse proof")
 }
 
 /// On these inputs we intentionally have a `Cut` at/near the root,
@@ -47,6 +36,7 @@ fn fragility_strictly_drops_on_cut_examples() {
 
 /// For inputs with no root Cut (or no relevant policy trigger),
 /// elimination may be a no-op, but it must *never* increase fragility.
+/// (This also guards against regressions in the scoring function.)
 #[test]
 fn fragility_never_increases_on_all_examples() {
     let paths = [
