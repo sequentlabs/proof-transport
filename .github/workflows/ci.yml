@@ -1,4 +1,5 @@
 name: CI
+
 on:
   push:
   pull_request:
@@ -20,7 +21,7 @@ jobs:
         run: cargo build --verbose
 
       - name: Test
-        run: cargo test --verbose
+        run: cargo test --workspace --verbose
 
       - name: Format check
         run: cargo fmt --all -- --check
@@ -33,7 +34,7 @@ jobs:
 
       - name: Validate JSON examples
         run: |
-          ajv validate -s schemas/proof.schema.json -d examples/proof_with_cut.json
-          ajv validate -s schemas/proof.schema.json -d examples/proof_cut_eliminated.json
-          ajv validate -s schemas/proof.schema.json -d examples/or_proof_with_cut.json
-          ajv validate -s schemas/registry.schema.json -d examples/R.json
+          ajv validate -s schemas/proof.schema.json     -d examples/proof_with_cut.json
+          ajv validate -s schemas/proof.schema.json     -d examples/proof_cut_eliminated.json
+          ajv validate -s schemas/proof.schema.json     -d examples/proof_cut_chain.json
+          ajv validate -s schemas/registry.schema.json  -d examples/R.json
