@@ -1,11 +1,24 @@
-use std::fs::File;
+// tests/transport_invariants.rs
+use std::fs;
 
-use serde_json::from_reader;
+use proof_transport::{
+    ast::Proof,
+    cutelim::cut_eliminate_all,
+    frag::fragility_score,
+    validator::validate_local_wf,
+};
 
-use proof_transport::{ast::Proof, cut_eliminate_all, fragility_score, validate_local_wf};
-
+/// Tolerant loader for examples:
+/// - Accepts JSON with comments / trailing commas (via json5)
+/// - Then deserializes into our strongly-typed `Proof`
+/// - Our `Sequent` deserializer is already permissive (string form,
+///   2‑tuple `[ctx, thm]`, 3‑tuple `[ctx, "<sep>", thm]`, and object form).
 fn load(path: &str) -> Proof {
-    from_reader(File::open(path).expect("open JSON")).expect("parse proof")
+    let s = fs::read_to_string(path).expect("open JSON");
+    // Parse the source as JSON5 (allows comments, trailing commas)
+    let v: serde_json::Value = json5::from_str(&s).expect("parse examples as JSON5");
+    // Convert to the concrete type (this uses our tolerant `Sequent` impl)
+    serde_json::from_value::<Proof>(v).expect("decode Proof")
 }
 
 /// On these inputs we intentionally have a `Cut` at/near the root,
@@ -13,9 +26,9 @@ fn load(path: &str) -> Proof {
 #[test]
 fn fragility_strictly_drops_on_cut_examples() {
     let paths = [
-        "examples/proof_with_cut.json", // existing root Cut
-        "examples/proof_cut_chain.json", // nested/internal Cut
-        "examples/proof_cut_pair.json",  // sibling Cuts
+        "examples/proof_with_cut.json",   // existing root Cut
+        "examples/proof_cut_chain.json",  // nested/internal Cut
+        "examples/proof_cut_pair.json",   // sibling Cuts
     ];
 
     for path in paths {
