@@ -1,3 +1,4 @@
+// src/transport.rs
 use anyhow::Result;
 
 use crate::{
@@ -21,13 +22,13 @@ pub fn transport(proof: &Proof, reg: &Registry, _from: u64, to: u64) -> Result<P
     // What is enabled at the target time?
     let enabled_to = reg.enabled_at(to);
 
-    // Clone to avoid mutating the caller’s proof
+    // Clone to avoid mutating the caller’s proof.
     let mut p = proof.clone();
 
     // 1) Validate starting proof
     validate_local_wf(&p)?;
 
-    // 2) Apply registry‑aware transform: if Cut is disabled at target, eliminate all cuts
+    // 2) Apply registry‑aware transform: if Cut is disabled at the target, eliminate all cuts
     if !enabled_to.contains(&RuleId::Cut) {
         p = cut_eliminate_all(&p);
     }
