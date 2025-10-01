@@ -1,0 +1,23 @@
+{
+  "root": "c_forall",
+  "nodes": [
+    {
+      "id": "c_forall",
+      "rule": "Cut",
+      "premises": ["a_forall", "a_exists"],
+      "sequent": { "left": ["∀x P(x)"], "right": ["∀x P(x)"] }
+    },
+    {
+      "id": "a_forall",
+      "rule": "Axiom",
+      "premises": [],
+      "sequent": { "left": ["∀x P(x)"], "right": ["∀x P(x)"] }
+    },
+    {
+      "id": "a_exists",
+      "rule": "Axiom",
+      "premises": [],
+      "sequent": { "left": ["∃y Q(y)"], "right": ["∃y Q(y)"] }
+    }
+  ]
+}

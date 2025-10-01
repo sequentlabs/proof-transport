@@ -1,0 +1,6 @@
+{
+  "times": [
+    { "t": 0, "enabled_rules": ["Id","Cut","ImpR","ImpL","AndR","AndL1","AndL2","OrR1","OrR2","OrL","BotL"] },
+    { "t": 1, "enabled_rules": ["Id","ImpR","ImpL","AndR","AndL1","AndL2","OrR1","OrR2","OrL","BotL"] }
+  ]
+}

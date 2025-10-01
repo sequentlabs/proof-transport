@@ -1,0 +1,138 @@
+# Proof-Transport
+
+[![Build Status](https://github.com/sequentlabs/proof-transport/actions/workflows/ci.yml/badge.svg)](https://github.com/sequentlabs/proof-transport/actions/workflows/ci.yml)
+[![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)](LICENSE)
+[![Live Demo](https://img.shields.io/badge/demo-online-green)](https://sequentlabs.github.io/proof-transport/)
+
+**Proof-Transport**: keep proofs valid when the proof kernel changes.  
+Automatically transport sequent proofs across rule-set updates (e.g., remove `Cut`) and emit stability certificates.
+
+---
+
+## 🔗 Links
+- 📄 [Project board](https://github.com/sequentlabs/proof-transport/projects)
+- 🌍 [Live demo explorer](https://sequentlabs.github.io/proof-transport/)
+- ✅ [Latest CI run](https://github.com/sequentlabs/proof-transport/actions)
+
+## Docs
+- [Architecture](docs/architecture.md)
+- [Worked Example](docs/worked-example.md)
+
+## Usage
+
+---
+
+## ✅ What CI checks
+- Rust crate builds successfully  
+- JSON examples are schema‑valid  
+- BEFORE proofs contain a `Cut`  
+- AFTER proofs have no `Cut`  
+- Node count decreases (fragility drop)
+
+---
+
+## 🖼️ Demo Screenshot
+![Demo screenshot](docs/img/proof_demo.png)
+
+---
+
+## ⚡ Quickstart
+
+```bash
+# 1) Toolchain
+rustup toolchain install stable
+rustup default stable
+
+# 2) Build + unit tests
+cargo build
+cargo test
+
+### Library API (new section)
+```md
+## 📦 Library API (MVP)
+
+### Library
+```rust
+
+Transport a proof across a registry change and compute fragility deltas.
+
+### Tests & Goldens (tighten wording)
+```md
+
+## ✅ Tests & Goldens
+
+## 🗺️ Status
+
+- Phase‑1 (Propositional MVP): ~80%  
+  ✓ Registry‑aware transport driver  
+  ✓ Fragility metric + delta  
+  ✓ Golden example + harness  
+  ☐ More goldens (3–5)  
+  ☐ Registry unit tests  
+  ☐ Rustdoc polish
+
+## Golden examples
+
+The CI “golden harness” scans `examples/` and runs a light transport + WF check on each JSON.
+These are intentionally small graphs that exercise specific behaviors:
+
+| File                          | What it exercises                                    |
+|------------------------------|-------------------------------------------------------|
+| `proof_with_cut.json`        | Single root `Cut`; fragility must strictly drop       |
+| `proof_cut_chain.json`       | Root `Cut` with a nested/internal `Cut`               |
+| `proof_cut_pair.json`        | Two sibling `Cut`s under a root `Cut`                 |
+| `proof_cut_free.json`        | Cut-free; elimination is a no-op (idempotence)        |
+| `proof_with_unreachable.json`| Extra unreachable node; pruning must remove it        |
+| `proof_fo_quantifiers.json`  | FO surface strings (`∀/∃`) to show syntax-agnosticism |
+
+Run locally:
+
+```bash
+cargo test -q
+
+---
+
+## 🤝 Partners & Early Adopters
+- Discussions with Lean/Coq devs about testing Proof‑Transport exporters  
+- Applied crypto teams have expressed interest in resilient audit proofs  
+- Academic collaborators intend to trial Proof‑Transport in verification workflows  
+
+> “We plan to trial Proof‑Transport to preserve proofs across kernel changes.” — mark@mazlo.io
+
+---
+
+##  About Us
+**SequentLabs** is building resilient proof infrastructure.  
+
+- Core maintainer: lead developer & architect  
+- Collaborators: Lean/Coq/Agda researchers and cryptography engineers  
+- Community: open to contributors via GitHub issues and discussions  
+
+Our mission: keep formal proofs alive under kernel evolution, lowering re-verification costs for critical systems.
+
+##  Timeline (6 months)
+
+| Month | Milestones |
+|-------|------------|
+| 1–2   | FO substitution correctness tests; golden FO proofs |
+| 2–3   | Exporter prototypes (Lean subset, Coq via SerAPI) |
+| 3–4   | Benchmarks on large DAGs; performance memo results; web viz polish |
+| 4–5   | External trial with partner; ZK contract spec draft |
+| 5–6   | Paper draft (CPP/LFMTP); community onboarding (3+ contributors) |
+
+
+##  Evaluation & Metrics
+
+- ≥10 golden tests (prop + FO)  
+- Transport 10k-node DAG < 500ms  
+- 2 exporters (Lean/Coq subsets)  
+- ≥3 external contributors/users  
+- 1 artifact badge at CPP/LFMTP  
+- Public web viz demo online
+
+##  Who Uses Proof-Transport
+
+- **Formal verification teams:** keep Lean/Coq proofs valid when kernels evolve.  
+- **Blockchain auditors:** resilient smart-contract proofs when policies change.  
+- **AI safety researchers:** preserve long-lived safety proofs as specs update.  
+- **Compliance teams:** machine-checkable continuity of evidence under evolving standards.

@@ -1,0 +1,8 @@
+{
+  "root": "n1",
+  "nodes": [
+    { "id": "n1", "rule": "Id",
+      "sequent": { "ctx": [{"tag":"Var","fields":"A"}], "goal": {"tag":"Var","fields":"A"} },
+      "premises": [] }
+  ]
+}

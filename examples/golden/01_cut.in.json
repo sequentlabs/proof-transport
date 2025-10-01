@@ -1,0 +1,8 @@
+{
+  "root": "n0",
+  "nodes": [
+    { "id": "n0", "rule": "Cut", "premises": ["n1", "n2"] },
+    { "id": "n1", "rule": "Id",  "premises": [] },
+    { "id": "n2", "rule": "Id",  "premises": [] }
+  ]
+}

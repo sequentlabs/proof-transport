@@ -1,0 +1,75 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1"/>
+  <title>Proof-Transport Demo</title>
+  <style>
+    body {font-family: system-ui, sans-serif; margin:0;}
+    #bar {display:flex; gap:1rem; padding:0.7rem; background:#f4f4f4; align-items:center;}
+    #cy {height: calc(100vh - 52px); width: 100vw;}
+    .btn {padding:6px 10px; border:1px solid #bbb; background:#fff; cursor:pointer}
+  </style>
+  <script src="https://unpkg.com/cytoscape@3.26.0/dist/cytoscape.min.js"></script>
+</head>
+<body>
+<div id="bar">
+  <strong>Proof-Transport Demo</strong>
+  <button class="btn" id="btn-before1">Example 1 BEFORE</button>
+  <button class="btn" id="btn-after1">Example 1 AFTER</button>
+  <button class="btn" id="btn-before2">Example 2 BEFORE</button>
+  <button class="btn" id="btn-after2">Example 2 AFTER</button>
+  <input type="file" id="file" style="margin-left:auto"/>
+</div>
+<div id="cy"></div>
+<script>
+const cy = cytoscape({
+  container: document.getElementById('cy'),
+  style: [
+    { selector: 'node', style: {
+      'label': 'data(lbl)',
+      'font-size': 14,
+      'text-wrap': 'wrap',
+      'text-max-width': 120,
+      'background-color': ele => ele.data('rule')==='Cut' ? '#ff4d4d' : '#4da6ff',
+      'shape':'round-rectangle',
+      'padding':'15px'
+    }},
+    { selector: 'edge', style: {'target-arrow-shape':'triangle','curve-style':'bezier'} }
+  ],
+  layout: { name:'breadthfirst', directed:true, padding:10 }
+});
+
+async function loadJson(url) {
+  const j = await fetch(url).then(r=>r.json());
+  const nodes = []; const edges = [];
+  (j.nodes||[]).forEach(n => {
+    const goal = JSON.stringify(n.sequent?.goal || {}).slice(0,30);
+    const lbl = `${n.rule}\nctx=${(n.sequent?.ctx||[]).length}\n${goal}`;
+    nodes.push({ data:{ id:n.id, lbl, rule:n.rule }});
+    (n.premises||[]).forEach(p => edges.push({ data:{ id:`${p}->${n.id}`, source:p, target:n.id }}));
+  });
+  cy.elements().remove(); cy.add(nodes).add(edges);
+  cy.layout({ name:'breadthfirst', directed:true }).run();
+}
+
+// Buttons for Example 1
+document.getElementById('btn-before1').onclick = () => loadJson('data/proof_with_cut.json');
+document.getElementById('btn-after1').onclick  = () => loadJson('data/proof_cut_eliminated.json');
+
+// Buttons for Example 2
+document.getElementById('btn-before2').onclick = () => loadJson('data/proof_with_cut_2.json');
+document.getElementById('btn-after2').onclick  = () => loadJson('data/proof_cut_eliminated_2.json');
+
+document.getElementById('file').onchange = e => {
+  const f = e.target.files[0]; if(!f) return;
+  const r = new FileReader();
+  r.onload = ev => loadJson(URL.createObjectURL(new Blob([ev.target.result],{type:'application/json'})));
+  r.readAsText(f);
+};
+
+// Auto-load Example 1 BEFORE
+loadJson('data/proof_with_cut.json');
+</script>
+</body>
+</html>

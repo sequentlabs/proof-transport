@@ -1,0 +1,40 @@
+name: CI
+
+on:
+  push:
+  pull_request:
+
+jobs:
+  build-test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions-rs/toolchain@v1
+        with:
+          toolchain: stable
+          profile: minimal
+          components: rustfmt, clippy
+          override: true
+
+      - name: Build
+        run: cargo build --verbose
+
+      - name: Test
+        run: cargo test --workspace --verbose
+
+      - name: Format check
+        run: cargo fmt --all -- --check
+
+      - name: Clippy
+        run: cargo clippy -- -D warnings
+
+      - name: Install ajv-cli
+        run: npm i -g ajv-cli
+
+      - name: Validate JSON examples
+        run: |
+          ajv validate -s schemas/proof.schema.json     -d examples/proof_with_cut.json
+          ajv validate -s schemas/proof.schema.json     -d examples/proof_cut_eliminated.json
+          ajv validate -s schemas/proof.schema.json     -d examples/proof_cut_chain.json
+          ajv validate -s schemas/registry.schema.json  -d examples/R.json

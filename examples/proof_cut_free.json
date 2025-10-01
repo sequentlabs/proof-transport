@@ -1,0 +1,6 @@
+{
+  "root": "n1",
+  "nodes": [
+    { "id": "n1", "rule": "Axiom", "premises": [], "sequent": "(A ⇒ A)" }
+  ]
+}

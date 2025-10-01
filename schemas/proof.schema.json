@@ -1,0 +1,46 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$id": "https://sequentlabs.github.io/schemas/proof.schema.json",
+  "title": "Proof",
+  "type": "object",
+  "properties": {
+    "root": { "type": "string" },
+    "nodes": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "properties": {
+          "id": { "type": "string" },
+          "rule": {
+            "type": "string",
+            "enum": [
+              "Id", "Cut",
+              "AndL", "AndR",
+              "OrL1", "OrL2", "OrR1", "OrR2",
+              "ImplL", "ImplR",
+              "Forall", "Exists",
+              "Bot", "Top"
+            ]
+          },
+          "sequent": {
+            "type": "object",
+            "properties": {
+              "ctx": {
+                "type": "array",
+                "items": { "type": "object" }
+              },
+              "goal": { "type": "object" }
+            },
+            "required": ["ctx", "goal"]
+          },
+          "premises": {
+            "type": "array",
+            "items": { "type": "string" }
+          }
+        },
+        "required": ["id", "rule", "sequent"]
+      }
+    }
+  },
+  "required": ["root", "nodes"]
+}
