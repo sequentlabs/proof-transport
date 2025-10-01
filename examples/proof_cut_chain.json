@@ -5,31 +5,46 @@
       "id": "c1",
       "rule": "Cut",
       "premises": ["c2", "a3"],
-      "sequent": { "left": ["P"], "right": ["P"] }
+      "sequent": {
+        "ctx": [ { "tag": "Var", "fields": "P" } ],
+        "goal": { "tag": "Var", "fields": "P" }
+      }
     },
     {
       "id": "c2",
       "rule": "Cut",
       "premises": ["a1", "a2"],
-      "sequent": { "left": ["P"], "right": ["P"] }
+      "sequent": {
+        "ctx": [ { "tag": "Var", "fields": "P" } ],
+        "goal": { "tag": "Var", "fields": "P" }
+      }
     },
     {
       "id": "a1",
-      "rule": "Axiom",
+      "rule": "Id",
       "premises": [],
-      "sequent": { "left": ["P"], "right": ["P"] }
+      "sequent": {
+        "ctx": [ { "tag": "Var", "fields": "P" } ],
+        "goal": { "tag": "Var", "fields": "P" }
+      }
     },
     {
       "id": "a2",
-      "rule": "Axiom",
+      "rule": "Id",
       "premises": [],
-      "sequent": { "left": ["Q"], "right": ["Q"] }
+      "sequent": {
+        "ctx": [ { "tag": "Var", "fields": "Q" } ],
+        "goal": { "tag": "Var", "fields": "Q" }
+      }
     },
     {
       "id": "a3",
-      "rule": "Axiom",
+      "rule": "Id",
       "premises": [],
-      "sequent": { "left": ["R"], "right": ["R"] }
+      "sequent": {
+        "ctx": [ { "tag": "Var", "fields": "R" } ],
+        "goal": { "tag": "Var", "fields": "R" }
+      }
     }
   ]
 }
