@@ -19,8 +19,6 @@
       "premises": [],
       "sequent": { "left": ["q"], "right": ["q"] }
     },
-
-    // Unreachable node (not referenced from root)
     {
       "id": "ghost",
       "rule": "Axiom",
