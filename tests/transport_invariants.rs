@@ -1,12 +1,9 @@
 // tests/transport_invariants.rs
-use std::fs::File;
 use serde_json::from_reader;
+use std::fs::File;
 
 use proof_transport::{
-    ast::Proof,
-    cutelim::cut_eliminate_all,
-    frag::fragility_score,
-    validator::validate_local_wf,
+    ast::Proof, cutelim::cut_eliminate_all, frag::fragility_score, validator::validate_local_wf,
 };
 
 fn load(path: &str) -> Proof {

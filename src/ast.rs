@@ -80,7 +80,9 @@ impl<'de> Deserialize<'de> for Sequent {
                     .into_iter()
                     .map(|x| serde_json::from_value::<Formula>(x).map_err(E::custom))
                     .collect(),
-                other => Ok(vec![serde_json::from_value::<Formula>(other).map_err(E::custom)?]),
+                other => Ok(vec![
+                    serde_json::from_value::<Formula>(other).map_err(E::custom)?
+                ]),
             }
         }
 
@@ -166,9 +168,9 @@ impl<'de> Deserialize<'de> for Sequent {
                 // pick an array value as ctx and a non-array (or single-element array) as thm.
                 if thm_opt.is_none() {
                     // Prefer a non-array value as `thm`.
-                    thm_opt = obj
-                        .iter()
-                        .find_map(|(_, v)| if !v.is_array() { Some(v.clone()) } else { None });
+                    thm_opt =
+                        obj.iter()
+                            .find_map(|(_, v)| if !v.is_array() { Some(v.clone()) } else { None });
                     // If everything is arrays, allow a single-element array as `thm`.
                     if thm_opt.is_none() {
                         thm_opt = obj.iter().find_map(|(_, v)| match v {
@@ -178,9 +180,9 @@ impl<'de> Deserialize<'de> for Sequent {
                     }
                 }
                 if ctx_opt.is_none() {
-                    ctx_opt = obj
-                        .iter()
-                        .find_map(|(_, v)| if v.is_array() { Some(v.clone()) } else { None });
+                    ctx_opt =
+                        obj.iter()
+                            .find_map(|(_, v)| if v.is_array() { Some(v.clone()) } else { None });
                 }
 
                 let thm_val = thm_opt.ok_or_else(|| {

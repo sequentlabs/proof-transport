@@ -1,23 +1,18 @@
 // tests/invariants.rs
 
-mod support;            // pulls in tests/support.rs
-use support::load;      // tolerant loader (strict JSON first, then JSON5)
+mod support; // pulls in tests/support.rs
+use support::load; // tolerant loader (strict JSON first, then JSON5)
 
-use proof_transport::{
-    ast::Proof,
-    cut_eliminate_all,
-    fragility_score,
-    validate_local_wf,
-};
+use proof_transport::{ast::Proof, cut_eliminate_all, fragility_score, validate_local_wf};
 
 /// On these inputs we intentionally have a `Cut` at/near the root,
 /// so eliminating cuts must strictly drop fragility.
 #[test]
 fn fragility_strictly_drops_on_cut_examples() {
     let paths = [
-        "examples/proof_with_cut.json",      // existing root Cut
-        "examples/proof_cut_chain.json",     // nested/internal Cut
-        "examples/proof_cut_pair.json",      // sibling Cuts
+        "examples/proof_with_cut.json",  // existing root Cut
+        "examples/proof_cut_chain.json", // nested/internal Cut
+        "examples/proof_cut_pair.json",  // sibling Cuts
     ];
 
     for path in paths {
