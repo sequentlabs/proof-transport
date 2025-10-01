@@ -19,20 +19,11 @@ pub enum RuleId {
 
 /// A point-in-time rule configuration used by tests:
 /// TimeSlice { t, enabled_rules }
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, Default)]
 pub struct TimeSlice {
     pub t: u64,
     /// Tests construct this with `vec![…]`, so keep it as a Vec.
     pub enabled_rules: Vec<RuleId>,
-}
-
-impl Default for TimeSlice {
-    fn default() -> Self {
-        Self {
-            t: 0,
-            enabled_rules: Vec::new(),
-        }
-    }
 }
 
 /// Registry holds an ordered set of time slices.

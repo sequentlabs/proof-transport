@@ -3,7 +3,7 @@
 mod support; // pulls in tests/support.rs
 use support::load; // tolerant loader (strict JSON first, then JSON5)
 
-use proof_transport::{ast::Proof, cut_eliminate_all, fragility_score, validate_local_wf};
+use proof_transport::{cut_eliminate_all, fragility_score, validate_local_wf};
 
 /// On these inputs we intentionally have a `Cut` at/near the root,
 /// so eliminating cuts must strictly drop fragility.

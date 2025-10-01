@@ -6,7 +6,6 @@ use serde_json::Value; // used by the robust Sequent deserializer
 /// ============================
 /// Terms
 /// ============================
-
 /// Accept either the structured `{ tag, fields }` or a permissive string form.
 #[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Eq, Hash)]
 #[serde(untagged)]
@@ -27,7 +26,6 @@ pub enum TermNode {
 /// ============================
 /// Formulas
 /// ============================
-
 /// Accept either the structured `{ tag, fields }` or a permissive string form.
 #[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Eq, Hash)]
 #[serde(untagged)]
@@ -68,6 +66,7 @@ impl<'de> Deserialize<'de> for Sequent {
         let v = Value::deserialize(d)?;
 
         // Parse a single Formula from a JSON value.
+        #[allow(dead_code)]
         fn parse_formula<E: DeError>(v: Value) -> Result<Formula, E> {
             serde_json::from_value::<Formula>(v).map_err(E::custom)
         }
